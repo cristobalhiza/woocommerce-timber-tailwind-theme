@@ -1,0 +1,1253 @@
+@import "tailwindcss";
+
+/* Las dos familias del diseño, servidas desde el propio tema: se empaquetan en
+   dist/ con el resto y no hay petición a Google en tiempo de ejecución, que es
+   lo mismo que ya se decidió para Alpine (header.twig — nada de CDN).
+   De Libre Caslon solo hacen falta los dos pesos que usan los titulares. */
+@import "@fontsource-variable/manrope";
+@import "@fontsource/libre-caslon-text/400.css";
+@import "@fontsource/libre-caslon-text/700.css";
+
+/* Da estilo al texto que escribe el cliente en el editor: descripciones de
+   producto y contenido de páginas. No se aplica al carrito ni al pago, que son
+   bloques de WooCommerce con su propio marcado. */
+@plugin "@tailwindcss/typography";
+
+@source "../templates/**/*.twig";
+@source "../views/**/*.twig";
+@source "../includes/**/*.php";
+@source "../*.php";
+@source "./**/*.js";
+
+/* CSS PERSONALIZADO COMIENZA AQUÍ */
+
+/* CIFRAS
+   Libre Caslon Text dibuja los números con el mismo contraste fino que las
+   letras y a tamaño de precio se leen mal: el 5 y el 6 se confunden, y el punto
+   y la coma de «$29.990,00» casi desaparecen. Los titulares de la tienda están
+   llenos de números —«36 Condones», «144 Unidades», «120 Ml»— y los precios son
+   números enteros, así que no basta con arreglar la ficha.
+   
+   En vez de meter una tercera familia, los dígitos se sirven de Manrope, que ya
+   viaja en el bundle y está dibujada para interfaz: cifras abiertas, sin
+   contraste y todas del mismo ancho. `unicode-range` hace que el navegador use
+   esta cara **solo** para dígitos y para los signos que los acompañan; las
+   letras siguen cayendo en Libre Caslon, que es lo que da el carácter.
+   
+   Va declarada antes que la serif en --font-serif: el primer @font-face que
+   cubre el carácter es el que gana. */
+@font-face {
+    font-family: "Cifras";
+    src: url("@fontsource-variable/manrope/files/manrope-latin-wght-normal.woff2") format("woff2-variations");
+    font-weight: 200 800;
+    font-style: normal;
+    font-display: swap;
+    /* Dígitos, coma, punto, signo de dólar y porcentaje. */
+    unicode-range: U+0024, U+0025, U+002C, U+002E, U+0030-0039;
+}
+
+/* Identidad «Timeless Intimacy», la que salió de Stitch a partir del banner:
+   granate imperial sobre alabastro, con el oro reservado a la llamada a la
+   acción. Sustituye a la paleta tinta/rosa anterior. Se declaran como tema de
+   Tailwind para poder usarlas también como clases (bg-marca-vino, text-marca-oro).
+
+   Reparto de contraste, que es lo que decide dónde puede ir cada color:
+   el granate sobre alabastro da 10,4:1 —vale para texto, titulares y badges—,
+   pero el oro sobre blanco se queda en 1,9:1. Por eso el oro **nunca es tinta
+   de texto**: solo fondo de botón con texto obsidiana encima (8,3:1). Si algún
+   día aparece un «ver más» en oro sobre claro, está mal. */
+@theme {
+    --color-marca-vino: #8b0000;
+    --color-marca-vino-hondo: #610000;
+    --color-marca-oro: #d4af37;
+    --color-marca-oro-hondo: #b8952b;
+    --color-marca-crema: #fcf9f8;
+    --color-marca-obsidiana: #1c1b1b;
+
+    /* Los tres que trae la maqueta y que no estaban en la paleta del banner:
+       el carbón del pie y de la cinta —más cálido que la obsidiana, que junto
+       a la foto del hero se veía como un agujero—, el oro claro con el que el
+       pie escribe sobre ese carbón (7,9:1; el oro de marca ahí se queda en
+       4,4:1) y el marrón tibio del texto secundario, que es lo que evita el
+       gris frío sobre alabastro. El oro claro sigue sin valer sobre blanco. */
+    --color-marca-carbon: #2c2d2a;
+    --color-marca-oro-claro: #ffe088;
+    --color-marca-tenue: #5a403c;
+    /* Borde cálido: el gris neutro corta el alabastro y se ve azulado al lado. */
+    --color-marca-borde: #e3beb8;
+
+    /* Manrope para todo el texto funcional —queda como --font-sans, así que
+       entra sola en cada elemento— y Libre Caslon solo en los titulares. */
+    --font-sans: "Manrope Variable", ui-sans-serif, system-ui, sans-serif;
+    /* «Cifras» delante: se lleva solo los números (ver el @font-face de
+       arriba), y las letras siguen en Libre Caslon. */
+    --font-serif: "Cifras", "Libre Caslon Text", ui-serif, Georgia, serif;
+
+    /* El diseño reserva el círculo al logo y a los sellos; el resto de la
+       interfaz es de esquina blanda de 4px. */
+    --radius-marca: 0.25rem;
+
+    /* La escala gris de Tailwind es fría y al lado del alabastro tira a azul:
+       se sustituye por la neutra cálida del diseño. Va aquí y no plantilla por
+       plantilla porque los grises son ~25 usos repartidos por todo el tema
+       —placeholders de imagen, bordes, texto secundario— y todos quieren el
+       mismo temple. Las clases siguen llamándose gray-*. */
+    --color-gray-50: #f6f3f2;
+    --color-gray-100: #f0eded;
+    --color-gray-200: #e5e2e1;
+    --color-gray-300: #dcd9d9;
+    --color-gray-400: #b0afac;
+    --color-gray-500: #8a8785;
+    --color-gray-600: #6b6867;
+    --color-gray-700: #524f4e;
+    --color-gray-800: #313030;
+    --color-gray-900: #1c1b1b;
+}
+
+/* RÓTULO
+   La etiqueta pequeña en mayúsculas del diseño: «FILTER SPECIFICATIONS»,
+   «COMPANY», el antetítulo de cada noticia. En la maqueta es Manrope SemiBold
+   14 con 0,7px de espaciado, **no** Libre Caslon: de los ~80 textos de la
+   pantalla de categorías solo seis son serif, y son titulares de verdad.
+
+   Existe como clase porque varias de estas etiquetas son `<h2>` por semántica
+   —encabezan su bloque— y el `@layer base` les pone serif por ser titulares.
+   Sin algo que lo deshaga, el rótulo sale en la familia equivocada, que es
+   justo lo que pasó. El color lo pone quien la usa: obsidiana sobre claro,
+   oro claro sobre el carbón del pie.
+
+   Va en @layer components y no suelta: las utilidades de Tailwind viven en una
+   capa posterior, así que así `text-xs` o `text-marca-oro-claro` en la misma
+   etiqueta siguen ganando. Sin capa, el CSS sin capa le gana a la utilidad y el
+   ajuste de la plantilla se pierde en silencio. */
+@layer components {
+    .il-rotulo {
+        font-family: var(--font-sans);
+        font-size: 0.875rem;
+        line-height: 1.25rem;
+        font-weight: 600;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        color: var(--color-marca-obsidiana);
+    }
+}
+
+/* CAJA DE CONTENIDO
+   El <main> es de ancho completo —el hero, la franja de ofertas y el pie se
+   pintan de borde a borde—, así que el ancho de lectura lo pone cada bloque
+   con esta clase. Es la medida del diseño: 1280px de contenido con 64px de
+   aire a los lados. */
+.il-caja {
+    width: 100%;
+    max-width: 1280px;
+    margin-inline: auto;
+    padding-inline: 1rem;
+}
+
+@media (width >= 64rem) {
+    .il-caja {
+        padding-inline: 4rem;
+    }
+}
+
+/* La tienda y los archivos de categoría van más anchos: la columna de filtros
+   se lleva 19rem del contenido y con 1280px quedaban tres tarjetas más
+   estrechas que las de la portada.
+   
+   Se aplica por la clase del <body> —de ahí que haga falta body_class()— y no
+   solo al contenido: la cabecera y el pie lo siguen, porque una cabecera más
+   estrecha que la rejilla se lee como un fallo de alineación. La ficha de
+   producto se queda en 1280: ahí lo que hay es texto. */
+.woocommerce-shop .il-caja,
+.tax-product_cat .il-caja {
+    max-width: 1680px;
+}
+
+/* LLAMADA A LA ACCIÓN EN ORO
+   El botón principal del diseño no es oro plano sino un degradado corto entre
+   dos ámbares, con el texto casi negro encima (13:1). Va en CSS porque lo
+   comparten hero, ficha y carrito, y escrito como utilidad arbitraria en cada
+   plantilla se copiaba mal a la tercera. */
+.il-cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 1rem 2rem;
+    border-radius: var(--radius-marca);
+    background-image: linear-gradient(134deg, #ffe088 0%, #fed65b 100%);
+    color: #241a00;
+    font-size: 0.875rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    filter: drop-shadow(0 1px 1px rgb(0 0 0 / 0.05));
+    transition: filter 150ms;
+}
+
+.il-cta:hover {
+    filter: drop-shadow(0 2px 4px rgb(0 0 0 / 0.15));
+}
+
+/* PRECIO
+   Lo escribe WooCommerce con get_price_html(): <del> e <ins> para las rebajas,
+   más el símbolo de moneda en su propio <span>. No hay clase del tema donde
+   agarrarse, así que el estilo va sobre el contenedor que sí pone la plantilla.
+   En serif, que es donde el diseño pone la cifra. */
+.il-precio {
+    font-variant-numeric: tabular-nums;
+    font-size: 1.125rem;
+    line-height: 1.75rem;
+    color: var(--color-marca-vino-hondo);
+}
+
+/* El precio anterior de una rebaja: menor, gris y tachado, delante del nuevo. */
+/* En la ficha el precio es la cifra principal de la caja de compra, y ahí la
+   maqueta lo pasa a serif grande en obsidiana. */
+.il-precio--ficha {
+    font-family: var(--font-serif);
+    font-size: 2rem;
+    line-height: 2.5rem;
+    font-weight: 700;
+    color: var(--color-marca-obsidiana);
+}
+
+.il-precio del {
+    margin-right: 0.5rem;
+    color: var(--color-gray-500);
+    font-size: 0.875rem;
+    font-weight: 400;
+}
+
+/* El navegador subraya <ins> por defecto y aquí el papel de «nuevo precio» ya
+   lo cuenta el contraste con el tachado. */
+.il-precio ins {
+    text-decoration: none;
+}
+
+/* CINTA INFORMATIVA
+   Los dos mensajes van apilados en la misma celda de la rejilla y se turnan con
+   una animación de opacidad: sin JS, sin temporizador y sin salto de altura.
+   Con un solo mensaje no hay nada que turnar y la animación da igual.
+
+   Con movimiento reducido no se anima: se queda el primer mensaje fijo, que es
+   por lo que el segundo <span> parte en opacidad 0. */
+.il-cinta {
+    display: grid;
+    place-items: center;
+    text-align: center;
+}
+
+.il-cinta > span {
+    grid-area: 1 / 1;
+}
+
+.il-cinta > span + span {
+    opacity: 0;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+    .il-cinta > span {
+        animation: il-cinta 12s infinite;
+    }
+
+    .il-cinta > span + span {
+        animation-delay: -6s;
+    }
+}
+
+@keyframes il-cinta {
+    0%, 45%  { opacity: 1; }
+    50%, 95% { opacity: 0; }
+    100%     { opacity: 1; }
+}
+
+/* Titulares en serif sin tocar plantilla por plantilla: alcanza también a los
+   que pinta WooCommerce y a los del editor de bloques.
+
+   Van en obsidiana, no en granate: en la maqueta todos los titulares de sección
+   y los nombres de producto son `#1c1b1b`, y el granate queda para los sitios
+   contados donde es un acento —el H1 de la ficha y el del carrito, los
+   antetítulos, los enlaces «ver todo» y el precio de listado—. Esos se pintan
+   en su plantilla. Con el granate de serie, la página entera se volvía roja y
+   el acento dejaba de acentuar nada.
+
+   El tamaño va aquí porque el reset de Tailwind deja todos los titulares a 1em,
+   y hasta ahora solo lo reponían las plantillas que lo escribían a mano: los de
+   WooCommerce —el «Shop» de la tienda, «Productos relacionados»— salían del
+   tamaño de un párrafo. Es la escala del diseño (display-lg / headline-lg /
+   headline-md). Va en @layer base, así que cualquier text-3xl de una plantilla
+   le sigue ganando. */
+@layer base {
+    h1, h2, h3 {
+        font-family: var(--font-serif);
+        color: var(--color-marca-obsidiana);
+        text-wrap: balance;
+    }
+
+    /* Del headline-lg-mobile del diseño (28px) al display-lg (48px) sin media
+       query: el clamp hace de escala. */
+    h1 {
+        font-size: clamp(1.75rem, 1.1rem + 2.6vw, 3rem);
+        line-height: 1.15;
+        letter-spacing: -0.02em;
+        font-weight: 700;
+    }
+
+    h2 {
+        font-size: 2rem;
+        line-height: 2.5rem;
+        font-weight: 700;
+    }
+
+    h3 {
+        font-size: 1.5rem;
+        line-height: 2rem;
+        font-weight: 700;
+    }
+}
+
+/* Carrito y pago son bloques de WooCommerce: marcado ajeno que no se toca.
+   Sus botones no traen relleno propio —esperan que lo ponga el tema—, así que
+   basta con repintar las piezas que llevan identidad: botón, enlaces, foco y
+   el acento de los controles de formulario. Los otros ~300 selectores de
+   cart.css y checkout.css se dejan como vienen. */
+.il-bloques-woo {
+    accent-color: var(--color-marca-vino);
+    --wc-form-color-text: var(--color-marca-obsidiana);
+}
+
+/* «Finalizar compra» y «Realizar el pedido» son la acción principal, y esas van
+   en oro con texto obsidiana (el oro no aguanta texto blanco: 1,6:1). */
+.il-bloques-woo :is(.wc-block-components-button:not(.is-link), .wp-element-button) {
+    background-color: var(--color-marca-oro);
+    border: 0;
+    border-radius: var(--radius-marca);
+    color: var(--color-marca-obsidiana);
+    padding: 0.75rem 2rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+}
+
+.il-bloques-woo :is(.wc-block-components-button:not(.is-link), .wp-element-button):hover {
+    background-color: var(--color-marca-oro-hondo);
+}
+
+/* El foco de serie es azul de WordPress; el anillo va en granate, que es lo
+   único que se distingue sobre el propio oro del botón. */
+.il-bloques-woo :is(.wc-block-components-button:not(.is-link), .wp-element-button):focus {
+    box-shadow: inset 0 0 0 1px #fff, 0 0 0 2px var(--color-marca-vino);
+}
+
+.il-bloques-woo a:not(.wc-block-components-button):not(.wp-element-button) {
+    color: var(--color-marca-vino);
+}
+
+/* AVISOS
+   El canal por el que WooCommerce dice «producto añadido» o por qué ha fallado
+   un pago. Sin regla salen como texto suelto, indistinguible del contenido: es
+   marcado suyo, no de las plantillas del tema.
+
+   El diseño pide estados apagados —verde oliva y ocre, nada de neón—, así que
+   el error usa el par error-container/on-error-container de la propia paleta y
+   el aviso informativo su ocre; el verde no viene en la paleta de Stitch y se
+   añade aquí como único color de fuera. */
+:is(.woocommerce-message, .woocommerce-info, .woocommerce-error) {
+    margin: 0 0 1.5rem;
+    padding: 0.875rem 1rem;
+    border-left: 3px solid;
+    border-radius: var(--radius-marca);
+    list-style: none;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.woocommerce-message {
+    background-color: #f2f5ea;
+    border-color: #4f5d2f;
+    color: #38431f;
+}
+
+.woocommerce-info {
+    background-color: #faf3e3;
+    border-color: var(--color-marca-oro-hondo);
+    color: #574500;
+}
+
+.woocommerce-error {
+    background-color: #ffdad6;
+    border-color: #ba1a1a;
+    color: #93000a;
+}
+
+/* El «Ver carrito» que viaja dentro del aviso es una acción secundaria, y esas
+   son de granate perfilado con el centro transparente. */
+:is(.woocommerce-message, .woocommerce-info, .woocommerce-error) .button {
+    margin-left: auto;
+    padding: 0.375rem 0.875rem;
+    border: 1px solid var(--color-marca-vino);
+    border-radius: var(--radius-marca);
+    color: var(--color-marca-vino);
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+:is(.woocommerce-message, .woocommerce-info, .woocommerce-error) .button:hover {
+    background-color: var(--color-marca-vino);
+    color: #fff;
+}
+
+/* FORMULARIOS DE WOOCOMMERCE
+   Acceso, registro, recuperar contraseña y las direcciones de la cuenta. El
+   reset de Tailwind deja los <input> sin borde ni relleno —invisibles sobre el
+   fondo— y los <label> pegados al campo. Se estilan por las clases de
+   WooCommerce, no por selectores de elemento, para no alcanzar los formularios
+   del editor ni los de los bloques de pago, que traen los suyos. */
+.woocommerce-form-row {
+    margin-bottom: 1.25rem;
+}
+
+.woocommerce-form label:not(.woocommerce-form__label-for-checkbox) {
+    display: block;
+    margin-bottom: 0.375rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+
+.woocommerce-Input--text,
+.woocommerce-form input[type="password"],
+.woocommerce-form input[type="email"] {
+    display: block;
+    width: 100%;
+    max-width: 24rem;
+    padding: 0.625rem 0.75rem;
+    border: 1px solid var(--color-marca-borde);
+    border-radius: var(--radius-marca);
+    background-color: #fff;
+}
+
+:is(.woocommerce-Input--text, .woocommerce-form input[type="password"], .woocommerce-form input[type="email"]):focus {
+    outline: 2px solid var(--color-marca-vino);
+    outline-offset: -1px;
+}
+
+.woocommerce-form__label-for-checkbox {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-right: 1rem;
+}
+
+.woocommerce-form__input-checkbox {
+    width: 1rem;
+    height: 1rem;
+}
+
+.woocommerce-LostPassword {
+    font-size: 0.875rem;
+}
+
+.woocommerce-LostPassword a {
+    color: var(--color-marca-vino);
+}
+
+/* CABECERA DE LA TIENDA
+   Migas, título, recuento y ordenación los suelta WooCommerce como hermanos,
+   sin contenedor común: no hay forma de ponerlos en fila con flex sin añadir
+   una plantilla. Se usa el float que la propia hoja de WooCommerce da por
+   supuesto, y la rejilla se despeja debajo. */
+.woocommerce-breadcrumb {
+    margin-bottom: 0.5rem;
+    font-size: 0.875rem;
+    color: var(--color-gray-600);
+}
+
+.woocommerce-products-header {
+    max-width: 44rem;
+    margin-bottom: 2.5rem;
+}
+
+/* La descripción de la categoría —la que se ve bajo el título en la maqueta—
+   la imprime WooCommerce en su propio bloque de término. */
+.woocommerce-products-header .term-description {
+    margin-top: 1rem;
+    color: var(--color-marca-tenue);
+    font-size: 1.125rem;
+    line-height: 1.75rem;
+}
+
+.woocommerce-result-count {
+    margin-bottom: 2rem;
+    color: var(--color-gray-600);
+}
+
+.woocommerce-ordering {
+    float: right;
+    margin-bottom: 2rem;
+}
+
+.woocommerce-ordering select {
+    padding: 0.5rem 0.75rem;
+    border: 1px solid var(--color-marca-borde);
+    border-radius: var(--radius-marca);
+    background-color: #fff;
+}
+
+/* TIENDA CON COLUMNA DE FILTROS
+   La abre y la cierra includes/woocommerce.php alrededor del bucle, porque el
+   archivo lo pinta WooCommerce con sus plantillas PHP. En móvil los filtros van
+   arriba, apilados; a partir de 1024px, en columna fija a la izquierda como en
+   la maqueta. */
+.il-tienda {
+    display: grid;
+    gap: 2rem;
+}
+
+@media (width >= 64rem) {
+    .il-tienda {
+        grid-template-columns: 16rem minmax(0, 1fr);
+        gap: 3rem;
+    }
+
+    /* Hasta cuatro por fila, y nunca por debajo de 15,5rem por tarjeta: el
+       número de columnas lo decide el hueco que queda junto a los filtros, no
+       un salto de pantalla. El `max()` con el reparto en cuatro es lo que pone
+       el techo; sin él, auto-fill llegaría a cinco en un monitor ancho. */
+    .il-tienda__lista ul.products {
+        grid-template-columns: repeat(auto-fill, minmax(max(15.5rem, (100% - 4.5rem) / 4), 1fr));
+    }
+}
+
+/* RANGO DE PRECIO
+   Dos <input type="range"> nativos sobre la misma pista: el navegador ya trae
+   el arrastre, el teclado y el táctil, así que no hay librería de sliders.
+
+   El truco de los dos superpuestos es dejar el input transparente y sin
+   puntero, y devolvérselo solo al tirador: así se puede agarrar el de abajo
+   aunque el de arriba lo cubra. Los dos --desde/--hasta los escribe Alpine en
+   el style del contenedor. */
+.il-rango {
+    position: relative;
+    height: 1.75rem;
+    display: flex;
+    align-items: center;
+}
+
+.il-rango__pista {
+    position: absolute;
+    inset-inline: 0;
+    height: 0.25rem;
+    border-radius: 999px;
+    background: var(--color-marca-borde);
+}
+
+/* El tramo elegido, en granate. Se pinta sobre la pista con los porcentajes
+   que calcula el componente. */
+.il-rango__pista::after {
+    content: '';
+    position: absolute;
+    left: var(--desde, 0%);
+    right: calc(100% - var(--hasta, 100%));
+    top: 0;
+    bottom: 0;
+    border-radius: 999px;
+    background: var(--color-marca-vino);
+}
+
+.il-rango__tirador {
+    position: absolute;
+    inset-inline: 0;
+    width: 100%;
+    margin: 0;
+    background: transparent;
+    appearance: none;
+    pointer-events: none;
+}
+
+.il-rango__tirador:focus-visible {
+    outline: none;
+}
+
+.il-rango__tirador::-webkit-slider-thumb {
+    appearance: none;
+    pointer-events: auto;
+    width: 1.125rem;
+    height: 1.125rem;
+    border-radius: 999px;
+    border: 2px solid var(--color-marca-vino);
+    background: #fff;
+    box-shadow: 0 1px 3px rgb(0 0 0 / 0.25);
+    cursor: grab;
+}
+
+.il-rango__tirador::-moz-range-thumb {
+    pointer-events: auto;
+    width: 1.125rem;
+    height: 1.125rem;
+    border-radius: 999px;
+    border: 2px solid var(--color-marca-vino);
+    background: #fff;
+    box-shadow: 0 1px 3px rgb(0 0 0 / 0.25);
+    cursor: grab;
+}
+
+.il-rango__tirador:active::-webkit-slider-thumb {
+    cursor: grabbing;
+}
+
+/* El foco tiene que verse: el tirador se maneja con las flechas del teclado. */
+.il-rango__tirador:focus-visible::-webkit-slider-thumb {
+    outline: 2px solid var(--color-marca-oro-hondo);
+    outline-offset: 2px;
+}
+
+.il-rango__tirador:focus-visible::-moz-range-thumb {
+    outline: 2px solid var(--color-marca-oro-hondo);
+    outline-offset: 2px;
+}
+
+/* SELECTOR MÚLTIPLE DE LOS FILTROS
+   <details> nativo: abre y cierra sin JavaScript. El <summary> se disfraza de
+   campo de formulario —borde, fondo blanco, flecha— para que se lea como el
+   selector que es, y enseña dentro las fichas de lo elegido. Alpine solo filtra
+   la lista por lo que se escribe en el buscador. */
+.il-multi__campo {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    list-style: none;
+    min-height: 2.5rem;
+    padding: 0.375rem 0.75rem;
+    border: 1px solid var(--color-marca-borde);
+    border-radius: var(--radius-marca);
+    background: #fff;
+    font-size: 0.875rem;
+}
+
+.il-multi__campo::-webkit-details-marker {
+    display: none;
+}
+
+.il-multi__campo:hover {
+    border-color: var(--color-marca-vino);
+}
+
+.il-multi__valores {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+    flex: 1;
+}
+
+.il-multi__ficha {
+    padding: 0.0625rem 0.5rem;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--color-marca-vino) 8%, #fff);
+    color: var(--color-marca-vino-hondo);
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.il-multi__vacio {
+    color: var(--color-marca-tenue);
+}
+
+.il-multi[open] .il-multi__flecha {
+    transform: rotate(180deg);
+}
+
+/* El panel cuelga del campo, como el de un <select> abierto. En la columna hay
+   sitio de sobra debajo, así que empuja en vez de flotar: flotando taparía las
+   categorías y en móvil se saldría de la pantalla. */
+.il-multi__panel {
+    margin-top: 0.5rem;
+    padding: 0.75rem;
+    border: 1px solid var(--color-marca-borde);
+    border-radius: var(--radius-marca);
+    background: #fff;
+}
+
+/* Veintitantos tamaños no caben: la lista se desplaza dentro del panel en vez
+   de empujar el resto de la columna fuera de la pantalla. */
+.il-multi__lista {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    margin-top: 0.5rem;
+    max-height: 13rem;
+    overflow-y: auto;
+}
+
+/* FICHAS DE LOS FILTROS PUESTOS
+   Sobre la rejilla, no en la columna: lo que explica por qué hay veinte
+   productos y no setenta tiene que estar al lado de los veinte. */
+.il-fichas {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.il-fichas__lista {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.il-ficha {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.25rem 0.625rem;
+    border: 1px solid var(--color-marca-borde);
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--color-marca-vino) 6%, #fff);
+    color: var(--color-marca-vino-hondo);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    line-height: 1.4;
+    transition: background-color 0.15s, border-color 0.15s;
+}
+
+.il-ficha:hover {
+    background: var(--color-marca-vino);
+    border-color: var(--color-marca-vino);
+    color: #fff;
+}
+
+.il-fichas__limpiar {
+    margin-inline-start: auto;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--color-marca-tenue);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+
+.il-fichas__limpiar:hover {
+    color: var(--color-marca-vino-hondo);
+}
+
+/* REJILLA DE LOS LISTADOS
+   El <ul class="products"> lo escribe WooCommerce en loop-start.php y el reset
+   de Tailwind lo deja como lista en bloque: sin esta regla cada producto ocupa
+   el ancho entero y el aspect-square de su imagen lo estira a un cuadrado del
+   tamaño de la pantalla.
+
+   Va en CSS y no como clases en la plantilla porque la plantilla solo pinta el
+   <li>: la lista que los envuelve es marcado de WooCommerce. La misma regla
+   sirve para la tienda, los archivos de categoría y los bloques de productos
+   relacionados, que reutilizan el mismo marcado.
+
+   4 / 2 / 1 columnas es la rejilla del diseño (design.md — decisión 15). Se
+   ignora a propósito la clase columns-N que añade WooCommerce: el número de
+   columnas es decisión del diseño, no del ajuste de la tienda. */
+ul.products {
+    display: grid;
+    grid-template-columns: 1fr;
+    clear: both;
+    gap: 1.5rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+@media (width >= 48rem) {
+    ul.products {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (width >= 64rem) {
+    ul.products {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+}
+
+/* OPINIONES DE PRODUCTO
+   El resumen con la nota y las barras lo pinta la plantilla del tema; la lista
+   y el formulario los suelta WooCommerce con comments_template() y llegan sin
+   más estilo que el suyo, que no es el del sitio. Se repinta aquí, que es donde
+   vive el resto del marcado ajeno.
+
+   El cliente lo pidió al estilo de MercadoLibre: todo en la misma página, bajo
+   la ficha, sin pestañas. */
+.il-opiniones-resumen {
+    display: grid;
+    gap: 2rem;
+    align-items: center;
+    padding: 1.5rem;
+    border: 1px solid var(--color-marca-borde);
+    border-radius: 0.5rem;
+    background-color: #fff;
+}
+
+@media (width >= 40rem) {
+    .il-opiniones-resumen {
+        grid-template-columns: 12rem minmax(0, 1fr);
+    }
+}
+
+/* WooCommerce repite el titular —«3 valoraciones en Producto»— justo debajo del
+   nuestro y del recuento del resumen. Sobra. */
+.il-opiniones .woocommerce-Reviews-title {
+    display: none;
+}
+
+.il-opiniones .commentlist {
+    display: grid;
+    gap: 1rem;
+    margin: 0 0 2.5rem;
+    padding: 0;
+    list-style: none;
+}
+
+.il-opiniones .comment_container {
+    display: grid;
+    grid-template-columns: 2.5rem minmax(0, 1fr);
+    gap: 1rem;
+    padding: 1.25rem;
+    border: 1px solid var(--color-marca-borde);
+    border-radius: 0.5rem;
+    background-color: #fff;
+}
+
+.il-opiniones .comment_container img.avatar {
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 9999px;
+}
+
+.il-opiniones .comment-text .meta {
+    margin: 0.375rem 0 0.5rem;
+    color: var(--color-marca-tenue);
+    font-size: 0.875rem;
+}
+
+.il-opiniones .woocommerce-review__author {
+    color: var(--color-marca-obsidiana);
+    font-weight: 600;
+}
+
+.il-opiniones .description p:last-child {
+    margin-bottom: 0;
+}
+
+/* Formulario: mismos campos que el resto del tema. */
+.il-opiniones .comment-reply-title {
+    display: block;
+    margin-bottom: 1rem;
+    font-family: var(--font-serif);
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--color-marca-obsidiana);
+}
+
+.il-opiniones .comment-form label {
+    display: block;
+    margin-bottom: 0.375rem;
+    color: var(--color-marca-tenue);
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+
+.il-opiniones .comment-form :is(input[type="text"], input[type="email"], input[type="url"], textarea) {
+    width: 100%;
+    padding: 0.625rem 0.75rem;
+    border: 1px solid var(--color-marca-borde);
+    border-radius: var(--radius-marca);
+    background-color: #fff;
+    font: inherit;
+}
+
+.il-opiniones .comment-form :is(input, textarea):focus {
+    border-color: var(--color-marca-vino);
+    outline: 2px solid transparent;
+    box-shadow: 0 0 0 2px rgb(139 0 0 / 0.15);
+}
+
+.il-opiniones .comment-form p {
+    margin-bottom: 1rem;
+}
+
+/* Las estrellas del formulario son enlaces con la tipografía de WooCommerce;
+   solo se les da el color de marca y sitio para respirar. */
+.il-opiniones .comment-form-rating .stars a {
+    color: var(--color-marca-oro-hondo);
+}
+
+.il-opiniones .comment-form-rating select {
+    border: 1px solid var(--color-marca-borde);
+    border-radius: var(--radius-marca);
+    padding: 0.5rem;
+}
+
+.il-opiniones .form-submit input[type="submit"] {
+    padding: 0.625rem 1.5rem;
+    border: 0;
+    border-radius: var(--radius-marca);
+    background-color: var(--color-marca-oro);
+    color: var(--color-marca-obsidiana);
+    font-size: 0.875rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    cursor: pointer;
+}
+
+.il-opiniones .form-submit input[type="submit"]:hover {
+    background-color: var(--color-marca-oro-hondo);
+}
+
+/* ESTRELLAS DE VALORACIÓN
+   El marcado es de WooCommerce —un <div class="star-rating"> con un <span> al
+   que le pone el ancho en porcentaje, y dentro el texto «Valorado 4 de 5» para
+   lectores de pantalla—, pero su hoja se retira entera en includes/woocommerce.php
+   y con ella la tipografía de iconos. Se dibujan aquí con el carácter ★: cinco
+   apagadas de fondo y las mismas cinco doradas recortadas al ancho del span.
+
+   Sin esta regla el visitante lee «Valorado 4,25 sobre 5 basado en 4
+   puntuaciones de clientes» en crudo, que es el texto que el icono sustituye. */
+.star-rating {
+    position: relative;
+    display: inline-block;
+    width: 5.4em;
+    height: 1.2em;
+    overflow: hidden;
+    font-size: 0.9rem;
+    line-height: 1.2;
+    letter-spacing: 0.1em;
+    white-space: nowrap;
+    vertical-align: middle;
+}
+
+.star-rating::before {
+    content: "★★★★★";
+    position: absolute;
+    inset: 0;
+    color: var(--color-gray-300);
+}
+
+/* El span lleva el ancho en porcentaje: recorta las estrellas doradas justo en
+   la nota. El texto de dentro se saca de la vista, no se oculta, para que siga
+   llegando a los lectores de pantalla. */
+.star-rating span {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    text-indent: -999em;
+}
+
+.star-rating span::before {
+    content: "★★★★★";
+    position: absolute;
+    left: 0;
+    top: 0;
+    color: var(--color-marca-oro-hondo);
+    text-indent: 0;
+}
+
+/* El mismo dibujo para elegir nota en el formulario, donde cada estrella es un
+   enlace. De serie se leen como «1 2 3 4 5». */
+.il-opiniones .comment-form-rating .stars a {
+    display: inline-block;
+    width: 1.4em;
+    color: var(--color-gray-300);
+    font-size: 1.5rem;
+    text-decoration: none;
+    text-indent: -999em;
+    position: relative;
+}
+
+.il-opiniones .comment-form-rating .stars a::before {
+    content: "★";
+    position: absolute;
+    inset: 0;
+    text-indent: 0;
+}
+
+.il-opiniones .comment-form-rating .stars:hover a,
+.il-opiniones .comment-form-rating .stars.selected a:not(.active) {
+    color: var(--color-marca-oro-hondo);
+}
+
+/* Al pasar el ratón por encima se apagan las que quedan a la derecha, que es
+   como se entiende que la nota es «hasta aquí». */
+.il-opiniones .comment-form-rating .stars a:hover ~ a,
+.il-opiniones .comment-form-rating .stars.selected a.active ~ a {
+    color: var(--color-gray-300);
+}
+
+/* PAGINACIÓN
+   La imprime WooCommerce como <ul class="page-numbers"> y el reset de Tailwind
+   la deja como una lista de números sueltos, uno por línea. */
+.woocommerce-pagination ul.page-numbers {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.5rem;
+    margin: 3rem 0 0;
+    padding: 0;
+    list-style: none;
+}
+
+.woocommerce-pagination .page-numbers {
+    display: flex;
+    min-width: 2.5rem;
+    height: 2.5rem;
+    align-items: center;
+    justify-content: center;
+    padding-inline: 0.5rem;
+    border: 1px solid var(--color-marca-borde);
+    border-radius: var(--radius-marca);
+    background-color: #fff;
+    color: var(--color-marca-tenue);
+    text-decoration: none;
+}
+
+.woocommerce-pagination .page-numbers.current {
+    border-color: var(--color-marca-vino);
+    color: var(--color-marca-vino);
+    font-weight: 600;
+}
+
+.woocommerce-pagination a.page-numbers:hover {
+    background-color: var(--color-marca-crema);
+    color: var(--color-marca-vino-hondo);
+}
+
+/* Los puntos suspensivos no son un destino: sin marco. */
+.woocommerce-pagination .page-numbers.dots {
+    border-color: transparent;
+    background-color: transparent;
+}
+
+/* FICHA TÉCNICA
+   Es la tabla de atributos de WooCommerce (wc_display_product_attributes), otra
+   vez marcado ajeno: sin regla, las dos columnas se pegan. */
+.il-atributos table {
+    width: 100%;
+    margin-top: 1.25rem;
+    border-collapse: collapse;
+}
+
+.il-atributos th,
+.il-atributos td {
+    padding: 0.625rem 0;
+    border-bottom: 1px solid var(--color-marca-borde);
+    text-align: left;
+    vertical-align: top;
+    font-size: 0.875rem;
+}
+
+.il-atributos th {
+    width: 40%;
+    padding-right: 1rem;
+    color: var(--color-marca-tenue);
+    font-weight: 600;
+}
+
+.il-atributos p {
+    margin: 0;
+}
+
+/* BOTONES DE AÑADIR AL CARRITO
+   Los pinta WooCommerce —<a class="button add_to_cart_button"> en los listados,
+   <button class="single_add_to_cart_button"> en la ficha— y el reset de
+   Tailwind los deja indistinguibles de un enlace de texto: el aspecto tiene
+   que ponerlo el tema. La clase del listado la llevan también los productos
+   variables, cuyo enlace lleva a la ficha a elegir variación —de ahí que valga
+   un solo bloque para los dos casos.
+
+   Se les suma .woocommerce-button, que es el envío de los formularios de la
+   cuenta: misma acción principal, mismo aspecto, una rama más en el :is() en
+   vez de un segundo bloque.
+
+   Solo cambia la caja: a lo ancho de la tarjeta en el listado, al ancho de su
+   texto en la ficha, donde comparte fila con el marco de cantidad. */
+:is(.add_to_cart_button, .single_add_to_cart_button, .woocommerce-button) {
+    padding: 0.625rem 1rem;
+    border-radius: var(--radius-marca);
+    background-color: var(--color-marca-oro);
+    color: var(--color-marca-obsidiana);
+    font-size: 0.875rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    line-height: 1.25rem;
+    text-align: center;
+    text-transform: uppercase;
+    text-decoration: none;
+    transition: background-color 150ms;
+}
+
+.add_to_cart_button {
+    display: block;
+    width: 100%;
+}
+
+.single_add_to_cart_button, .woocommerce-button {
+    display: inline-block;
+    height: 2.75rem;
+    cursor: pointer;
+}
+
+:is(.add_to_cart_button, .single_add_to_cart_button, .woocommerce-button):hover {
+    background-color: var(--color-marca-oro-hondo);
+}
+
+:is(.add_to_cart_button, .single_add_to_cart_button, .woocommerce-button):focus-visible {
+    outline: 2px solid var(--color-marca-vino);
+    outline-offset: 2px;
+}
+
+/* Cantidad y botón en una fila en la ficha. Se excluye el formulario de
+   variaciones: ese trae su propia tabla de atributos y flexarlo la rompe. */
+form.cart:not(.variations_form) {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+/* MARCO DE CANTIDAD
+   El mismo control aparece en tres marcados distintos: .quantity en la ficha
+   (plantilla de WooCommerce, botones inyectados por includes/woocommerce.php),
+   .il-contador en el drawer (marcado del tema) y el selector del bloque de
+   carrito (marcado de WooCommerce, intocable). Se agrupan los selectores en vez
+   de repetir el marco tres veces.
+
+   El :is() toma la especificidad de su rama más alta, que es justo lo que hace
+   falta para ganarle a las reglas propias de cart.css sin recurrir a !important. */
+:is(.quantity, .il-contador, .il-bloques-woo .wc-block-components-quantity-selector) {
+    display: inline-flex;
+    align-items: center;
+    height: 2.75rem;
+    border: 1px solid var(--color-marca-borde);
+    border-radius: var(--radius-marca);
+    overflow: hidden;
+}
+
+/* El bloque fija un ancho de 107px; el resto se ajusta al contenido. Va aparte
+   para no ganarle en especificidad al w-full de las tarjetas de listado. */
+.il-bloques-woo .wc-block-components-quantity-selector {
+    width: auto;
+}
+
+:is(
+    .quantity .il-paso,
+    .il-contador button,
+    .il-bloques-woo .wc-block-components-quantity-selector .wc-block-components-quantity-selector__button
+) {
+    width: 2.75rem;
+    min-width: 2.75rem;
+    height: 2.75rem;
+    flex: none;
+    font-size: 1.125rem;
+    line-height: 1;
+    color: var(--color-marca-vino);
+    opacity: 1;
+    cursor: pointer;
+}
+
+:is(
+    .quantity .il-paso,
+    .il-contador button,
+    .il-bloques-woo .wc-block-components-quantity-selector .wc-block-components-quantity-selector__button
+/* Lavado de granate en vez de un gris: el marco vive tanto sobre tarjeta blanca
+   como sobre el alabastro del fondo, y un relleno claro se perdería en el
+   segundo. */
+):hover {
+    background-color: rgb(139 0 0 / 0.06);
+}
+
+:is(
+    .quantity .il-paso,
+    .il-contador button,
+    .il-bloques-woo .wc-block-components-quantity-selector .wc-block-components-quantity-selector__button
+):disabled {
+    opacity: 0.35;
+    cursor: default;
+    background-color: transparent;
+}
+
+/* El foco de serie del bloque es un box-shadow interior; aquí se unifica en un
+   anillo de marca, que es visible sobre el relleno claro del hover. */
+:is(
+    .quantity .il-paso,
+    .il-contador button,
+    .il-bloques-woo .wc-block-components-quantity-selector .wc-block-components-quantity-selector__button
+):focus-visible {
+    outline: 2px solid var(--color-marca-vino);
+    outline-offset: -2px;
+    box-shadow: none;
+}
+
+/* El valor: <input> en la ficha y en el bloque, <span> en el drawer. */
+:is(
+    .quantity input.qty,
+    .il-contador [data-valor],
+    .il-bloques-woo .wc-block-components-quantity-selector input.wc-block-components-quantity-selector__input
+) {
+    width: 3rem;
+    min-width: 3rem;
+    flex: none;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    font-size: 1rem;
+    text-align: center;
+    color: inherit;
+    box-shadow: none;
+    /* Fuera las flechas nativas: para eso están los botones. */
+    appearance: textfield;
+}
+
+.quantity input.qty::-webkit-inner-spin-button,
+.quantity input.qty::-webkit-outer-spin-button {
+    appearance: none;
+    margin: 0;
+}
+
+/* PAPELERA
+   El bloque de carrito pinta el «eliminar» como texto; el icono va por máscara
+   para no tocar su marcado. font-size:0 esconde el texto de la vista pero lo
+   deja como nombre accesible del botón. La rama del bloque necesita esa cadena
+   larga porque cart.css llega a cuatro clases de especificidad. */
+:is(
+    .il-papelera,
+    .il-bloques-woo table.wc-block-cart-items .wc-block-cart-items__row .wc-block-cart-item__quantity .wc-block-cart-item__remove-link
+) {
+    display: inline-block;
+    width: 1.5rem;
+    height: 1.5rem;
+    font-size: 0;
+    text-decoration: none;
+    color: var(--color-marca-obsidiana);
+    background-color: currentColor;
+    -webkit-mask: var(--il-icono-papelera) center / 1.25rem no-repeat;
+    mask: var(--il-icono-papelera) center / 1.25rem no-repeat;
+}
+
+:is(
+    .il-papelera,
+    .il-bloques-woo table.wc-block-cart-items .wc-block-cart-items__row .wc-block-cart-item__quantity .wc-block-cart-item__remove-link
+):hover {
+    color: var(--color-marca-vino);
+}
+
+:root {
+    --il-icono-papelera: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3'/%3E%3C/svg%3E");
+}
+
+/* Evita el parpadeo de los controles del carrusel antes de que Alpine
+   evalúe x-show. */
+[x-cloak] {
+    display: none !important;
+}

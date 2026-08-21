@@ -1,0 +1,15 @@
+# Se construyen antes de desplegar, no se versionan.
+/vendor/
+/dist/
+/node_modules/
+
+.env
+.env.*
+*.log
+*.zip
+
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp

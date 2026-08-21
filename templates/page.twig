@@ -1,0 +1,46 @@
+{% extends "base.twig" %}
+
+{# Cada campo se imprime con |default() o dentro de un {% if %}: una página
+   guardada sin rellenar nada tiene que renderizar sin huecos ni marcadores
+   dirigidos al desarrollador (editable-content). #}
+
+{% block content %}
+    <div class="il-caja py-10">
+    <article class="{{ ancho_completo|default(false) ? 'w-full' : 'max-w-3xl mx-auto' }}">
+
+        {# El carrito y el pago también llevan titular: sin él la página empieza
+           directamente en la tabla del bloque y no se sabe dónde se está. Lo que
+           se salta en ancho completo es la cabecera editorial —bajada e imagen—,
+           que ahí no pinta nada. #}
+        <h1 class="mb-8 text-4xl text-marca-vino-hondo">{{ post.meta('hero_titulo')|default(post.title)|sin_entidades }}</h1>
+
+        {% if not ancho_completo|default(false) %}
+
+            {% if post.meta('hero_bajada') %}
+                <p class="mb-6 text-lg text-marca-tenue">{{ post.meta('hero_bajada') }}</p>
+            {% endif %}
+
+            {% if post.meta('hero_imagen') %}
+                {# Si el adjunto ya no existe, get_image() no devuelve nada y no
+                   se pinta un <img> roto. #}
+                {% set imagen = get_image(post.meta('hero_imagen')) %}
+                {% if imagen %}
+                    <img src="{{ imagen.src('large') }}"
+                         alt="{{ imagen.alt|default('') }}"
+                         class="w-full rounded-lg mb-8">
+                {% endif %}
+            {% endif %}
+        {% endif %}
+
+        {% if post.content %}
+            {# Contenido de Gutenberg: lleva HTML legítimo y es la excepción al
+               autoescape declarado en includes/timber.php. #}
+            {# prose solo para contenido de editor. En carrito y pago el marcado
+               es de los bloques de WooCommerce y la tipografía los deformaría:
+               ahí va il-bloques-woo, que solo les pone el color de marca. #}
+            <div class="{{ ancho_completo|default(false) ? 'il-bloques-woo' : 'prose max-w-none' }}">{{ post.content|raw }}</div>
+        {% endif %}
+
+    </article>
+    </div>
+{% endblock %}

@@ -1,0 +1,8 @@
+{# El armazón vive en header.twig y footer.twig porque WooCommerce lo pide por
+   su cuenta con get_header('shop') / get_footer('shop'). Así las páginas del
+   tema y las de la tienda comparten una única cabecera. #}
+{% include 'header.twig' %}
+
+{% block content %}{% endblock %}
+
+{% include 'footer.twig' %}

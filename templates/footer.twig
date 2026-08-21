@@ -1,0 +1,176 @@
+    </main>
+
+    {# Pie de cuatro columnas del diseño: identidad, catálogo, información y
+       contacto. Cada columna se omite entera si el cliente no ha rellenado lo
+       que la alimenta —igual que las secciones de la portada—, así que un sitio
+       recién instalado enseña solo la primera. #}
+    <footer class="bg-marca-carbon text-white mt-auto">
+        <div class="il-caja grid gap-10 py-16 md:grid-cols-2 lg:grid-cols-4 lg:py-20">
+
+            <div class="flex flex-col gap-6">
+                <p class="font-serif text-2xl font-bold tracking-[-0.025em] text-marca-oro-claro">{{ site.name }}</p>
+
+                {% if ajustes.empresa_descripcion|default('') %}
+                    <p class="text-white/80 leading-6">{{ ajustes.empresa_descripcion }}</p>
+                {% endif %}
+            </div>
+
+            {% set categorias_pie = function('get_terms', {
+                taxonomy: 'product_cat',
+                parent: 0,
+                hide_empty: true,
+                number: 6,
+                orderby: 'menu_order'
+            }) %}
+
+            {% if categorias_pie is iterable and categorias_pie|length %}
+                <nav class="flex flex-col gap-4">
+                    <h2 class="il-rotulo text-marca-oro-claro">Catálogo</h2>
+
+                    <ul class="flex flex-col gap-3">
+                        {% for categoria in categorias_pie %}
+                            <li>
+                                <a href="{{ function('get_term_link', categoria) }}"
+                                   class="text-marca-plata hover:text-white transition">{{ categoria.name }}</a>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                </nav>
+            {% endif %}
+
+            {# La columna legal del diseño: aquí es el menú principal, que es
+               donde el cliente ya pone «Envíos», «Cambios» o lo que necesite. #}
+            {% set menu = function('Timber\\Timber::get_menu', 'primary') %}
+
+            {% if menu and menu.items|length %}
+                <nav class="flex flex-col gap-4">
+                    <h2 class="il-rotulo text-marca-oro-claro">Información</h2>
+
+                    <ul class="flex flex-col gap-3">
+                        {% for item in menu.items %}
+                            <li>
+                                <a href="{{ item.link }}" class="text-marca-plata hover:text-white transition">{{ item.title }}</a>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                </nav>
+            {% endif %}
+
+            {% set redes = [
+                { nombre: 'WhatsApp',  url: ajustes.whatsapp|default('') ? 'https://wa.me/' ~ ajustes.whatsapp : '' },
+                { nombre: 'Instagram', url: ajustes.instagram|default('') },
+                { nombre: 'Facebook',  url: ajustes.facebook|default('') }
+            ]|filter(r => r.url is not empty) %}
+
+            {# Correo y teléfono se pintan como enlaces: en un móvil eso es una
+               llamada o un correo de un toque, y es donde se lee este pie. En el
+               `tel:` se quitan los espacios, que algunos marcadores no aceptan. #}
+            {% set contacto = [
+                { texto: ajustes.empresa_email|default(''),     enlace: ajustes.empresa_email|default('') ? 'mailto:' ~ ajustes.empresa_email : '' },
+                { texto: ajustes.empresa_telefono|default(''),  enlace: ajustes.empresa_telefono|default('') ? 'tel:' ~ ajustes.empresa_telefono|replace({' ': ''}) : '' },
+                { texto: ajustes.empresa_direccion|default(''), enlace: ajustes.empresa_mapa|default('') }
+            ]|filter(d => d.texto is not empty) %}
+
+            {% if redes|length or contacto|length %}
+                <div class="flex flex-col gap-4">
+                    <h2 class="il-rotulo text-marca-oro-claro">Contacto</h2>
+
+                    {% if redes|length %}
+                        <ul class="flex gap-4">
+                            {% for red in redes %}
+                                <li>
+                                    <a href="{{ red.url }}" class="text-marca-plata hover:text-white transition" rel="noopener">{{ red.nombre }}</a>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% endif %}
+
+                    {% if contacto|length %}
+                        <ul class="flex flex-col gap-2 text-sm text-marca-plata">
+                            {% for dato in contacto %}
+                                <li>
+                                    {% if dato.enlace %}
+                                        <a href="{{ dato.enlace }}" class="hover:text-white transition">{{ dato.texto }}</a>
+                                    {% else %}
+                                        {{ dato.texto }}
+                                    {% endif %}
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% endif %}
+                </div>
+            {% endif %}
+
+            {# Suscripción al correo de novedades. Los correos se guardan en el
+               propio WordPress (includes/suscripcion.php): no hay servicio de
+               boletines conectado todavía, y perder las altas mientras se decide
+               cuál sería peor que guardarlas aquí. #}
+            {% set aviso = function('il_mensaje_suscripcion') %}
+
+            <div class="flex flex-col gap-4">
+                <h2 class="il-rotulo text-marca-oro-claro">Suscríbete</h2>
+
+                <p class="text-sm text-marca-plata">Déjanos tu correo y te avisamos de nuevos productos y ofertas.</p>
+
+                <form id="suscripcion" action="{{ function('admin_url', 'admin-post.php') }}" method="post" class="flex flex-col gap-2">
+                    <input type="hidden" name="action" value="il_suscribir">
+                    {{ function('wp_nonce_field', 'il_suscribir', 'il_suscribir_nonce', true, false)|raw }}
+
+                    <div class="flex gap-2">
+                        <label class="sr-only" for="il-suscripcion">Tu correo electrónico</label>
+                        <input id="il-suscripcion" type="email" name="correo" required
+                               autocomplete="email" placeholder="tu@correo.cl"
+                               class="min-w-0 flex-1 rounded-marca border border-white/20 bg-white/10 px-3 py-2 text-sm text-white placeholder:text-marca-plata/70 focus:border-marca-oro-claro focus:outline-none">
+
+                        <button type="submit"
+                                class="shrink-0 rounded-marca bg-marca-oro px-4 py-2 font-semibold text-marca-obsidiana transition hover:bg-marca-oro-hondo"
+                                aria-label="Suscribirme">
+                            &rarr;
+                        </button>
+                    </div>
+
+                    {# Trampa para robots: una persona no ve este campo ni lo
+                       rellena, así que si viene con algo el alta se descarta. #}
+                    <p class="hidden" aria-hidden="true">
+                        <label>No rellenar<input type="text" name="il_web" tabindex="-1" autocomplete="off"></label>
+                    </p>
+                </form>
+
+                {% if aviso %}
+                    <p class="text-sm {{ aviso.error ? 'text-marca-oro-claro' : 'text-white' }}" role="status">{{ aviso.texto }}</p>
+                {% endif %}
+            </div>
+        </div>
+
+        {# Barra inferior: años, propiedad y autoría, centradas y separadas del
+           resto por una línea. El rango arranca en 2025 —el año en que se
+           levantó el sitio— y llega al año en curso; mientras sean el mismo se
+           imprime uno solo, que «2025 – 2025» no dice nada. #}
+        {% set anio = "now"|date('Y') %}
+
+        <div class="border-t border-white/10">
+            <p class="il-caja flex flex-wrap items-center justify-center gap-x-2 gap-y-1 py-6 text-center text-sm text-white/60">
+                <span>{{ anio > '2025' ? '2025 - ' ~ anio : anio }}</span>
+
+                <span aria-hidden="true">|</span>
+
+                <span>{{ site.name }} &copy; Todos los derechos reservados</span>
+
+                <span aria-hidden="true">|</span>
+
+                <span>
+                    Sitio desarrollado por
+                    <a href="https://cristobalhiza.com" target="_blank" rel="noopener"
+                       class="text-marca-plata underline-offset-2 hover:text-white hover:underline">cristobalhiza.com</a>
+                </span>
+            </p>
+        </div>
+    </footer>
+
+    {% if function('class_exists', 'WooCommerce') %}
+        {% include 'partes/carrito-drawer.twig' %}
+    {% endif %}
+
+    {{ function('wp_footer') }}
+</body>
+</html>

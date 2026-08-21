@@ -1,0 +1,14 @@
+{# Una casilla del lateral: enlace que pone o quita el valor. Lo comparten la
+   lista suelta y la desplegable. #}
+
+<a href="{{ opcion.enlace }}"
+   class="flex items-center gap-2 py-1 text-sm transition {{ opcion.activa ? 'font-semibold text-marca-vino-hondo' : 'text-marca-tenue hover:text-marca-vino-hondo' }}">
+    <span class="flex h-4 w-4 shrink-0 items-center justify-center rounded-xs border {{ opcion.activa ? 'border-marca-vino bg-marca-vino text-white' : 'border-marca-borde bg-white' }}">
+        {% if opcion.activa %}
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5"
+                 class="h-2.5 w-2.5" aria-hidden="true"><path d="m5 12 5 5 9-10"/></svg>
+        {% endif %}
+    </span>
+    {{ opcion.nombre }}{{ sufijo }}
+    <span class="ml-auto text-xs text-gray-500">{{ opcion.total }}</span>
+</a>

@@ -1,0 +1,22 @@
+{# Widget de cabecera. Mientras el store está en 'cargando' no se afirma que el
+   carrito esté vacío: no se pinta contador (cart). #}
+<button type="button"
+        @click="$store.carrito.abrir()"
+        class="relative flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-100"
+        aria-label="Abrir carrito">
+    {# Bolsa de compra dibujada a mano: dos trazos, hereda color y tamaño de
+       texto, y no arrastra una librería de iconos por un solo icono. #}
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
+         stroke-linecap="round" stroke-linejoin="round"
+         class="w-6 h-6" aria-hidden="true">
+        <path d="M6 7h12l1 13H5L6 7Z"/>
+        <path d="M9 10V6a3 3 0 0 1 6 0v4"/>
+    </svg>
+
+    <template x-if="$store.carrito.cantidad > 0">
+        <span x-text="$store.carrito.cantidad"
+              class="absolute -top-1 -right-1 min-w-5 h-5 px-1 rounded-full bg-marca-vino text-white text-xs flex items-center justify-center"></span>
+    </template>
+
+    <span class="hidden sm:inline text-sm" x-text="$store.carrito.total"></span>
+</button>

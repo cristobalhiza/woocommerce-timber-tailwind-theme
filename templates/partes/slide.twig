@@ -1,0 +1,47 @@
+{# Un slide sin destino de enlace se pinta como contenido no navegable: nunca
+   un <a> vacío (homepage — "elemento destacado sin enlace").
+
+   El rótulo del tema —título, bajada y llamada sobre el degradado— solo se
+   pinta si el slide lleva bajada. Los banners de la marca ya traen su propio
+   texto dentro de la imagen y encimarles otro titular los deja ilegibles; en
+   ese caso manda la imagen y el título viaja en el alt.
+
+   Y de ahí sale también el recorte: con rótulo la foto es fondo y se recorta a
+   la altura del hero (object-cover, como la maqueta); sin rótulo la imagen es
+   el mensaje y se muestra entera (object-contain), porque los banners no
+   comparten proporción y recortarlos se come justo el texto rotulado. #}
+
+{% set enlace = elemento.meta('slide_enlace') %}
+{% set etiqueta = enlace ? 'a' : 'div' %}
+{% set bajada = elemento.meta('slide_bajada') %}
+
+<{{ etiqueta }} {% if enlace %}href="{{ enlace }}"{% endif %}
+    class="relative block overflow-hidden bg-marca-crema {{ bajada ? 'min-h-[26rem] lg:min-h-[34rem]' : 'aspect-4/3 md:aspect-video' }}">
+
+    {% if elemento.thumbnail %}
+        <img src="{{ elemento.thumbnail.src('large') }}"
+             alt="{{ elemento.thumbnail.alt|default(elemento.title)|sin_entidades }}"
+             class="absolute inset-0 w-full h-full {{ bajada ? 'object-cover' : 'object-contain' }}">
+    {% endif %}
+
+    {% if bajada %}
+        {# El degradado va de alabastro opaco a transparente hacia la derecha:
+           el texto se lee sobre el propio color del sitio y la foto sigue
+           entera a la vista, en lugar del velo negro de antes. #}
+        <div class="absolute inset-0 bg-gradient-to-r from-marca-crema/95 via-marca-crema/70 to-transparent"></div>
+
+        <div class="il-caja relative flex min-h-[26rem] lg:min-h-[34rem] flex-col items-start justify-center py-12">
+            <h2 class="max-w-2xl text-4xl lg:text-5xl font-serif font-bold leading-tight tracking-[-0.02em] text-marca-obsidiana">{{ elemento.title|sin_entidades }}</h2>
+
+            <p class="mt-6 max-w-lg text-lg leading-7 text-marca-tenue">{{ bajada }}</p>
+
+            {% if enlace %}
+                <span class="il-cta mt-10">
+                    Ver más
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                         class="w-3 h-3" aria-hidden="true"><path d="m9 5 7 7-7 7"/></svg>
+                </span>
+            {% endif %}
+        </div>
+    {% endif %}
+</{{ etiqueta }}>

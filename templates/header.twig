@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="{{ site.language }}">
+<head>
+    <meta charset="{{ site.charset }}">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    {# CSS y Alpine los encola includes/assets.php desde dist/, con hash en el
+       nombre. Nada de CDN: el tema se despliega por FTP y debe funcionar sin
+       depender de un tercero. #}
+    {{ function('wp_head') }}
+</head>
+{# body_class() y no una clase escrita a mano: WordPress y los plugins cuelgan
+   de ahí lo que saben de la página. La hoja de WooCommerce va entera scopeada
+   bajo `.woocommerce`, así que sin esa clase no se aplicaba ni una regla suya
+   —las estrellas de valoración salían como el texto «Valorado 4 de 5», que es
+   el contenido que su CSS esconde y sustituye por los iconos. #}
+<body {{ function('body_class', 'bg-marca-crema text-marca-obsidiana flex flex-col min-h-screen') }}>
+
+    {# Cinta informativa. Desactivada, o activa pero sin texto, no se renderiza
+       ninguna franja (homepage). Con los dos mensajes rellenos se turnan solos:
+       el cruce lo hace .il-cinta en CSS, sin JS.
+
+       El diseño la pone en carbón sobre el resto de la página en alabastro: es
+       la franja de servicio —envío, discreción—, no una promoción, y en granate
+       competía con la cabecera. #}
+    {% set cinta = [ ajustes.cinta_texto|default(''), ajustes.cinta_texto_2|default('') ]|filter(m => m is not empty) %}
+
+    {% if ajustes.cinta_activa|default(0) and cinta|length %}
+        <div class="bg-marca-carbon text-white/90 text-xs px-4 py-2">
+            <div class="il-cinta">
+                {% for mensaje in cinta %}
+                    <span class="inline-flex items-center gap-2">
+                        {# Sobre discreto: el sello de «envío en embalaje neutro»
+                           del diseño. Dos trazos, hereda color y tamaño. #}
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
+                             class="w-3.5 h-3.5 shrink-0 text-marca-oro-claro" aria-hidden="true">
+                            <rect x="2.5" y="5" width="19" height="14" rx="2"/>
+                            <path d="m3 7 9 6 9-6"/>
+                        </svg>
+
+                        {% if ajustes.cinta_enlace|default('') %}
+                            <a href="{{ ajustes.cinta_enlace }}" class="hover:underline">{{ mensaje }}</a>
+                        {% else %}
+                            {{ mensaje }}
+                        {% endif %}
+                    </span>
+                {% endfor %}
+            </div>
+        </div>
+    {% endif %}
+
+    {# Cabecera translúcida sobre alabastro: el hero pasa por debajo y se ve
+       difuminado, que es lo que pide el diseño. El fondo lleva opacidad, así
+       que el borde cálido es lo único que la separa del contenido. #}
+    {# El estado del mega menú vive en la cabecera y no en el botón: el panel se
+       posiciona contra ella para salir de borde a borde, y así basta un
+       mouseleave de toda la cabecera para cerrarlo. #}
+    <header class="sticky top-0 z-50 border-b border-marca-borde bg-marca-crema/80 backdrop-blur-md shadow-sm"
+            x-data="{ mega: false }"
+            @mouseleave="mega = false"
+            @keydown.escape.window="mega = false">
+        <div class="il-caja flex h-20 items-center justify-between gap-4">
+            {# Logo del personalizador; sin logo, el nombre del sitio en serif. #}
+            {% set logo = function('get_theme_mod', 'custom_logo') %}
+
+            <a href="{{ site.link }}" class="shrink-0 font-serif text-xl sm:text-2xl lg:text-[2rem] font-bold leading-none tracking-[-0.025em] text-marca-vino-hondo hover:text-marca-vino transition">
+                {% if logo %}
+                    <img src="{{ function('wp_get_attachment_image_url', logo, 'medium') }}"
+                         alt="{{ site.name }}"
+                         class="h-12 lg:h-14 w-auto">
+                {% else %}
+                    {{ site.name }}
+                {% endif %}
+            </a>
+
+            {# La navegación del diseño son las líneas de producto: aquí son las
+               categorías raíz reales del catálogo, no una lista escrita a mano
+               que se quede vieja en cuanto el cliente añada una. En móvil la
+               fila se desplaza en horizontal en vez de esconderse tras un menú:
+               son tres o cuatro entradas, no hace falta JS. #}
+            {% set categorias_nav = function('get_terms', {
+                taxonomy: 'product_cat',
+                parent: 0,
+                hide_empty: true,
+                number: 6,
+                orderby: 'menu_order'
+            }) %}
+
+            {% set actual = function('get_queried_object_id') %}
+
+            <nav class="flex min-w-0 flex-1 items-center justify-center gap-6 lg:gap-8">
+                {# Disparador del mega menú. Abre al pasar el ratón y también al
+                   pulsar, que es lo único que funciona en pantalla táctil y con
+                   teclado. #}
+                <button type="button"
+                        @click="mega = !mega"
+                        @mouseenter="mega = true"
+                        :aria-expanded="mega ? 'true' : 'false'"
+                        aria-controls="il-mega"
+                        class="flex shrink-0 items-center gap-1.5 border-b-2 border-transparent pb-1.5 text-sm font-semibold tracking-[0.05em] text-marca-tenue transition hover:text-marca-vino-hondo"
+                        :class="mega && 'border-marca-vino-hondo text-marca-vino-hondo'">
+                    Productos
+
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                         class="h-3 w-3 transition-transform" :class="mega && 'rotate-180'" aria-hidden="true">
+                        <path d="m6 9 6 6 6-6"/>
+                    </svg>
+                </button>
+
+                {% if categorias_nav is iterable and categorias_nav|length %}
+                    <ul class="flex min-w-0 items-center gap-6 overflow-x-auto whitespace-nowrap lg:gap-8 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                        {% for categoria in categorias_nav %}
+                            <li>
+                                <a href="{{ function('get_term_link', categoria) }}"
+                                   class="block border-b-2 pb-1.5 text-sm font-semibold tracking-[0.05em] transition {{ actual == categoria.term_id ? 'border-marca-vino-hondo text-marca-vino-hondo' : 'border-transparent text-marca-tenue hover:text-marca-vino-hondo' }}">
+                                    {{ categoria.name }}
+                                </a>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+            </nav>
+
+            <div class="flex shrink-0 items-center gap-1 sm:gap-2">
+                {# Buscador del catálogo: formulario nativo contra la tienda, sin
+                   JS. Se esconde en pantallas estrechas, donde la lupa del
+                   diseño no cabe junto al logo y las categorías. #}
+                <form role="search" method="get" action="{{ site.link }}"
+                      class="hidden xl:flex items-center gap-2 rounded-marca border border-marca-borde bg-white/70 px-3 py-2">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
+                         class="w-4 h-4 text-marca-tenue" aria-hidden="true">
+                        <circle cx="11" cy="11" r="7"/>
+                        <path d="m20 20-3.5-3.5"/>
+                    </svg>
+                    <label class="sr-only" for="il-buscar">Buscar productos</label>
+                    <input id="il-buscar" type="search" name="s" placeholder="Buscar productos"
+                           class="w-40 bg-transparent text-sm placeholder:text-marca-tenue/70 focus:outline-none">
+                    <input type="hidden" name="post_type" value="product">
+                </form>
+
+                {% if function('wc_get_page_permalink', 'myaccount') %}
+                    <a href="{{ function('wc_get_page_permalink', 'myaccount') }}"
+                       class="flex items-center rounded p-2 text-marca-tenue hover:text-marca-vino-hondo hover:bg-white/60 transition"
+                       aria-label="Mi cuenta">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
+                             stroke-linecap="round" class="w-5 h-5" aria-hidden="true">
+                            <circle cx="12" cy="8" r="3.5"/>
+                            <path d="M5 20a7 7 0 0 1 14 0"/>
+                        </svg>
+                    </a>
+                {% endif %}
+
+                {% if function('class_exists', 'WooCommerce') %}
+                    <div x-data>{% include 'partes/carrito-widget.twig' %}</div>
+                {% endif %}
+            </div>
+        </div>
+
+        {% include 'partes/mega-menu.twig' %}
+    </header>
+
+    <main class="flex-grow">

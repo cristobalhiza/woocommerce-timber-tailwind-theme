@@ -1,0 +1,31 @@
+{# Fichas de los filtros puestos, sobre la rejilla.
+
+   Van aquí y no en la columna porque es donde se mira el resultado: lo que
+   explica por qué hay veinte productos en vez de setenta tiene que estar al
+   lado de los veinte. Cada ficha se quita sola, y el botón las quita todas.
+
+   Sin filtros no se pinta nada: una barra vacía que dice «ningún filtro» solo
+   ocupa sitio. #}
+
+{% if fichas|length %}
+    <div class="il-fichas">
+        <span class="il-rotulo">Filtros</span>
+
+        <ul class="il-fichas__lista">
+            {% for ficha in fichas %}
+                <li>
+                    <a href="{{ ficha.quitar }}" class="il-ficha" title="Quitar este filtro">
+                        {{ ficha.etiqueta }}
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                             class="h-3 w-3 shrink-0" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+                        <span class="sr-only">Quitar el filtro {{ ficha.etiqueta }}</span>
+                    </a>
+                </li>
+            {% endfor %}
+        </ul>
+
+        {% if fichas|length > 1 %}
+            <a href="{{ limpiar }}" class="il-fichas__limpiar">Quitar todos</a>
+        {% endif %}
+    </div>
+{% endif %}

@@ -1,0 +1,174 @@
+{# Ficha de producto. La galería y los swatches son del tema; el formulario de
+   añadir al carrito es el de WooCommerce, para no reimplementar la matriz de
+   disponibilidad de variaciones (design.md — decisión 14).
+
+   La maqueta pone las miniaturas en columna a la izquierda de la foto grande y
+   mete precio, cantidad y botón en una caja aparte: es lo que separa la compra
+   del texto de la ficha. #}
+
+{% set imagenes = [] %}
+{% if post.thumbnail %}
+    {% set imagenes = imagenes|merge([{ id: post.thumbnail.id, src: post.thumbnail.src('il-producto-grande'), miniatura: post.thumbnail.src('thumbnail'), alt: post.thumbnail.alt|default(post.title)|sin_entidades }]) %}
+{% endif %}
+{% for id in product.get_gallery_image_ids %}
+    {% set imagen = get_image(id) %}
+    {% if imagen %}
+        {% set imagenes = imagenes|merge([{ id: imagen.id, src: imagen.src('il-producto-grande'), miniatura: imagen.src('thumbnail'), alt: imagen.alt|default(post.title)|sin_entidades }]) %}
+    {% endif %}
+{% endfor %}
+
+<div {{ function('wc_product_class', 'grid gap-10 lg:grid-cols-2 lg:gap-16', product)|raw }}>
+
+    <div class="il-galeria flex flex-col-reverse gap-3 sm:flex-row" x-data="galeria({{ imagenes|json_encode }})">
+        {# Sin controles cuando solo hay una imagen. #}
+        <template x-if="imagenes.length > 1">
+            <div class="flex gap-3 overflow-x-auto sm:flex-col sm:overflow-visible">
+                <template x-for="(imagen, i) in imagenes" :key="imagen.id">
+                    <button type="button"
+                            @click="indice = i"
+                            :aria-current="indice === i"
+                            :class="indice === i ? 'ring-2 ring-marca-vino' : 'ring-1 ring-marca-borde'"
+                            class="h-16 w-16 shrink-0 overflow-hidden rounded-marca bg-white">
+                        <img :src="imagen.miniatura" :alt="imagen.alt" class="h-full w-full object-cover">
+                    </button>
+                </template>
+            </div>
+        </template>
+
+        <div class="aspect-square flex-1 overflow-hidden rounded-lg border border-marca-borde bg-white">
+            <template x-if="actual">
+                <img :src="actual.src" :alt="actual.alt" class="h-full w-full object-cover">
+            </template>
+        </div>
+    </div>
+
+    <div class="summary entry-summary">
+        {# En la maqueta el nombre de la ficha es de los pocos titulares en granate:
+           es el que manda en la página. Los de sección van en obsidiana. #}
+        <h1 class="text-3xl lg:text-4xl text-marca-vino-hondo">{{ post.title|sin_entidades }}</h1>
+
+        {# Sin `read_more`: Timber añade por su cuenta un «Read More» en inglés
+           al final del extracto, y el resumen de la ficha no lleva enlace —el
+           texto completo está más abajo, en la misma página. #}
+        {% if post.excerpt %}
+            <div class="prose mt-5 text-marca-tenue">{{ post.excerpt({ read_more: '' })|raw }}</div>
+        {% endif %}
+
+        {# Valoración bajo el título, con salto a las opiniones: es lo primero
+           que se mira antes de decidir, y el cliente lo pidió al estilo de
+           MercadoLibre —la nota arriba y las opiniones en la misma página, sin
+           pestañas que haya que abrir. #}
+        {% if product.get_rating_count %}
+            <p class="mt-4 flex items-center gap-3">
+                {{ function('wc_get_rating_html', product.get_average_rating, product.get_rating_count)|raw }}
+
+                <a href="#opiniones" class="text-sm text-marca-vino hover:text-marca-vino-hondo">
+                    {{ product.get_average_rating|replace({'.': ','}) }} · {{ product.get_rating_count }} {{ product.get_rating_count == 1 ? 'opinión' : 'opiniones' }}
+                </a>
+            </p>
+        {% endif %}
+
+        {# Sellos de la maqueta, con lo que la ficha sabe de verdad: si hay
+           existencias y a qué categorías pertenece. #}
+        <ul class="mt-6 flex flex-wrap gap-2">
+            <li class="rounded-full border border-marca-borde bg-white px-3 py-1 text-xs font-semibold text-marca-tenue">
+                {{ product.is_in_stock ? 'En stock' : 'Sin stock' }}
+            </li>
+
+            {% for termino in post.terms('product_cat') %}
+                <li class="rounded-full border border-marca-borde bg-white px-3 py-1 text-xs font-semibold text-marca-tenue">{{ termino.name }}</li>
+            {% endfor %}
+        </ul>
+
+        {# Caja de compra: precio, cantidad y botón. El formulario de dentro es
+           el de WooCommerce y no se toca. #}
+        <div class="mt-8 rounded-lg border border-marca-borde bg-white p-6">
+            {% if product.get_price_html %}
+                <div class="il-precio il-precio--ficha mb-5">{{ product.get_price_html|raw }}</div>
+            {% endif %}
+
+            {{ function('woocommerce_template_single_add_to_cart') }}
+        </div>
+
+        <div class="mt-6 text-sm text-marca-tenue">
+            {{ function('woocommerce_template_single_meta') }}
+        </div>
+    </div>
+</div>
+
+{# Descripción y ficha técnica, en las dos columnas de la maqueta: el texto a la
+   izquierda y los atributos —marca, medidas— en la tarjeta de la derecha.
+
+   wc_display_product_attributes() imprime por su cuenta en vez de devolver, así
+   que no puede guardarse en una variable: se llama en su sitio y la condición
+   la da el propio producto. #}
+{% set atributos = product.get_attributes|length or product.get_weight or product.get_dimensions(false)|length %}
+
+{% if post.content or atributos %}
+    <section class="mt-16 border-t border-marca-borde pt-10">
+        <div class="grid gap-10 lg:grid-cols-[1fr_24rem]">
+            {% if post.content %}
+                <div>
+                    <h2 class="text-2xl">Descripción</h2>
+                    <div class="prose mt-5 max-w-none">{{ post.content|raw }}</div>
+                </div>
+            {% endif %}
+
+            {% if atributos %}
+                <div class="il-atributos rounded-lg bg-marca-crema p-6">
+                    <h2 class="text-2xl">Ficha técnica</h2>
+                    {{ function('wc_display_product_attributes', product) }}
+                </div>
+            {% endif %}
+        </div>
+    </section>
+{% endif %}
+
+{# OPINIONES
+   El resumen —nota grande y barras por estrella— lo pinta el tema, porque
+   WooCommerce no lo trae: solo saca la lista y el formulario. Esos dos sí se
+   reutilizan tal cual con comments_template(), que es lo que carga la plantilla
+   de reseñas de WooCommerce con su control de estrellas, su moderación y su
+   aviso de cookies. Repintarlos a mano sería rehacer todo eso.
+
+   Va aquí abajo y no en una pestaña: es lo que pidió el cliente. #}
+{% if function('comments_open', post.id) or product.get_rating_count %}
+    <section id="opiniones" class="mt-16 border-t border-marca-borde pt-10">
+        <h2 class="text-2xl">Opiniones del producto</h2>
+
+        {% if product.get_rating_count %}
+            {% set conteos = product.get_rating_counts %}
+            {% set total = product.get_rating_count %}
+
+            <div class="il-opiniones-resumen mt-6">
+                <div class="text-center">
+                    <p class="font-serif text-5xl font-bold leading-none">{{ product.get_average_rating|replace({'.': ','}) }}</p>
+
+                    <div class="mt-2 flex justify-center">
+                        {{ function('wc_get_rating_html', product.get_average_rating, total)|raw }}
+                    </div>
+
+                    <p class="mt-2 text-sm text-marca-tenue">{{ total }} {{ total == 1 ? 'opinión' : 'opiniones' }}</p>
+                </div>
+
+                <ul class="flex flex-col gap-1.5">
+                    {% for estrellas in 5..1 %}
+                        {% set cuantas = conteos[estrellas]|default(0) %}
+
+                        <li class="flex items-center gap-3 text-sm">
+                            <span class="w-20 shrink-0 text-marca-tenue">{{ estrellas }} {{ estrellas == 1 ? 'estrella' : 'estrellas' }}</span>
+
+                            <span class="h-2 flex-1 overflow-hidden rounded-full bg-gray-200">
+                                <span class="block h-full rounded-full bg-marca-oro" style="width: {{ total ? (cuantas / total * 100)|round : 0 }}%"></span>
+                            </span>
+
+                            <span class="w-6 shrink-0 text-right text-marca-tenue">{{ cuantas }}</span>
+                        </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        {% endif %}
+
+        <div class="il-opiniones mt-10">{{ function('comments_template') }}</div>
+    </section>
+{% endif %}

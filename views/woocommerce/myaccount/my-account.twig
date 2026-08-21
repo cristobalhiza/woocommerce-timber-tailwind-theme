@@ -1,0 +1,9 @@
+{# Estructura de la cuenta. El contenido de cada endpoint lo sigue emitiendo
+   WooCommerce: aquí solo se define la disposición del tema. #}
+<div class="grid gap-8 md:grid-cols-[220px_1fr]">
+    {{ function('do_action', 'woocommerce_account_navigation') }}
+
+    <div class="woocommerce-MyAccount-content">
+        {{ function('do_action', 'woocommerce_account_content') }}
+    </div>
+</div>

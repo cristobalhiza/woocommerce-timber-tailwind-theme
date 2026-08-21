@@ -1,0 +1,58 @@
+{% extends "base.twig" %}
+
+{# Último recurso de la jerarquía de WordPress: el listado de entradas, los
+   resultados de búsqueda y el 404 caen aquí si no hay una plantilla más
+   concreta. Antes había en su lugar una página de demostración del andamiaje,
+   que es lo que veía quien abría una noticia o escribía mal una dirección. #}
+
+{% block content %}
+    <div class="il-caja py-12">
+        {% if posts|length %}
+            <h1>
+                {% if function('is_search') %}
+                    Resultados para «{{ function('get_search_query') }}»
+                {% else %}
+                    {{ function('single_post_title', '', false)|default('Novedades') }}
+                {% endif %}
+            </h1>
+
+            <ul class="mt-8 grid gap-6 md:grid-cols-3">
+                {% for entrada in posts %}
+                    <li>{% include 'partes/tarjeta-noticia.twig' with { entrada: entrada } only %}</li>
+                {% endfor %}
+            </ul>
+
+            {% if posts.pagination.pages|length > 1 %}
+                <nav class="woocommerce-pagination mt-4">
+                    <ul class="page-numbers">
+                        {% for pagina in posts.pagination.pages %}
+                            <li>
+                                {% if pagina.link %}
+                                    <a href="{{ pagina.link }}" class="page-numbers {{ pagina.current ? 'current' : '' }}">{{ pagina.title }}</a>
+                                {% else %}
+                                    <span class="page-numbers {{ pagina.current ? 'current' : '' }}">{{ pagina.title }}</span>
+                                {% endif %}
+                            </li>
+                        {% endfor %}
+                    </ul>
+                </nav>
+            {% endif %}
+        {% else %}
+            <div class="mx-auto max-w-xl py-10 text-center">
+                <h1>{{ function('is_search') ? 'Sin resultados' : 'Página no encontrada' }}</h1>
+
+                <p class="mt-4 text-lg text-marca-tenue">
+                    {{ function('is_search')
+                        ? 'No encontramos nada con esa búsqueda. Prueba con otra palabra o mira el catálogo completo.'
+                        : 'La página que buscas ya no está o cambió de dirección.' }}
+                </p>
+
+                {% set tienda = function('wc_get_page_permalink', 'shop') %}
+
+                <p class="mt-8">
+                    <a href="{{ tienda|default(site.link) }}" class="il-cta">Ver el catálogo</a>
+                </p>
+            </div>
+        {% endif %}
+    </div>
+{% endblock %}

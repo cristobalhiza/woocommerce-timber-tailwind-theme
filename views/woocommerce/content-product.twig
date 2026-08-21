@@ -1,0 +1,41 @@
+{# Elemento de listado: tienda, archivos y taxonomías de producto. Gemela de
+   templates/partes/tarjeta-producto.twig. #}
+<li {{ function('wc_product_class', 'group flex flex-col overflow-hidden rounded-lg border border-marca-borde bg-white transition hover:shadow-lg', product)|raw }}>
+
+    <a href="{{ post.link }}" class="relative block aspect-square overflow-hidden bg-gray-50">
+        {% if post.thumbnail %}
+            <img src="{{ post.thumbnail.src('il-producto') }}"
+                 alt="{{ post.thumbnail.alt|default(post.title)|sin_entidades }}"
+                 loading="lazy"
+                 class="h-full w-full object-cover transition duration-500 group-hover:scale-105">
+        {% endif %}
+
+        {% if product.is_on_sale %}
+            <span class="absolute left-3 top-3 rounded-sm bg-marca-vino px-2 py-1 text-xs font-semibold uppercase tracking-[0.1em] text-white">Oferta</span>
+        {% endif %}
+    </a>
+
+    <div class="flex flex-1 flex-col p-4">
+        <h2 class="text-lg leading-snug">
+            <a href="{{ post.link }}" class="font-serif font-bold hover:text-marca-vino-hondo">{{ post.title|sin_entidades }}</a>
+        </h2>
+
+        {# Valoración en la tarjeta: solo si el producto tiene reseñas. Sin
+           ellas, WooCommerce pinta cinco estrellas vacías y el listado parece
+           lleno de productos mal valorados. #}
+        {% if product.get_rating_count %}
+            <div class="mt-2 flex items-center gap-2">
+                {{ function('wc_get_rating_html', product.get_average_rating, product.get_rating_count)|raw }}
+                <span class="text-xs text-marca-tenue">({{ product.get_rating_count }})</span>
+            </div>
+        {% endif %}
+
+        {% if product.get_price_html %}
+            <div class="il-precio mt-auto pt-3">{{ product.get_price_html|raw }}</div>
+        {% endif %}
+
+        <div class="mt-4">
+            {% include 'partes/anadir-producto.twig' with { producto: product, id: post.id } only %}
+        </div>
+    </div>
+</li>

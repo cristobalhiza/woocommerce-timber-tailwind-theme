@@ -1,0 +1,53 @@
+{% extends "base.twig" %}
+
+{# Entrada del blog. La sección de novedades mezcla noticias propias con
+   publicaciones de medios: cuando la entrada tiene un enlace al original, esta
+   página es el resumen y la llamada manda al artículo completo, que no se
+   reproduce aquí porque no es del sitio. #}
+
+{% block content %}
+    {% set fuera = post.meta('noticia_enlace') %}
+    {% set fuente = post.meta('noticia_fuente') %}
+
+    <article class="il-caja py-12">
+        <div class="mx-auto max-w-3xl">
+            <p class="il-rotulo text-xs text-marca-vino-hondo">
+                {{ fuente ? fuente ~ ' · ' ~ post.date : post.date }}
+            </p>
+
+            <h1 class="mt-3 text-marca-vino-hondo">{{ post.title|sin_entidades }}</h1>
+
+            {% if post.thumbnail %}
+                <img src="{{ post.thumbnail.src('large') }}"
+                     alt="{{ post.thumbnail.alt|default(post.title)|sin_entidades }}"
+                     class="mt-8 w-full rounded-lg">
+            {% endif %}
+
+            {% if post.content %}
+                {# Contenido de Gutenberg: lleva HTML legítimo y es la excepción
+                   al autoescape declarado en includes/timber.php. #}
+                <div class="prose mt-8 max-w-none">{{ post.content|raw }}</div>
+            {% endif %}
+
+            {% if fuera %}
+                <p class="mt-10">
+                    <a href="{{ fuera }}" target="_blank" rel="noopener" class="il-cta">
+                        Leer el artículo completo en {{ fuente|default('el medio') }}
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                             class="h-3 w-3" aria-hidden="true"><path d="m9 5 7 7-7 7"/></svg>
+                    </a>
+                </p>
+
+                <p class="mt-4 text-sm text-marca-tenue">
+                    Resumen publicado por {{ site.name }}. El artículo original es de {{ fuente|default('su medio') }}.
+                </p>
+            {% endif %}
+
+            <p class="mt-12 border-t border-marca-borde pt-6">
+                <a href="{{ site.link }}" class="text-sm font-semibold tracking-[0.05em] text-marca-vino hover:text-marca-vino-hondo">
+                    &larr; Volver a {{ site.name }}
+                </a>
+            </p>
+        </div>
+    </article>
+{% endblock %}

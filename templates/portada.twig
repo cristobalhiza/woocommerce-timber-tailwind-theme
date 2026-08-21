@@ -1,0 +1,188 @@
+{% extends "base.twig" %}
+
+{# El orden y la presencia de las secciones van fijos aquí: el cliente edita el
+   contenido de cada una, no su disposición (homepage). Cada sección se omite
+   entera —encabezado incluido— si no alcanza su mínimo.
+
+   El <main> es de ancho completo: el hero y la franja de ofertas se pintan de
+   borde a borde y el resto de secciones se ciñen con .il-caja. #}
+
+{% block content %}
+
+    {# 1. Hero #}
+    {% if slides|length >= minimos.hero %}
+        {% if slides|length > 1 %}
+            {% include 'partes/carrusel.twig' with {
+                titulo: null,
+                elementos: slides,
+                vista: 'partes/slide.twig',
+                ancho: 'w-full',
+                caja: false,
+                autoplay: 6000
+            } only %}
+        {% else %}
+            {# Un solo destacado: sin controles de navegación. #}
+            <div class="mb-20">
+                {% include 'partes/slide.twig' with { elemento: slides|first } only %}
+            </div>
+        {% endif %}
+    {% endif %}
+
+    {# 2. Categorías, en mosaico: la primera manda y las siguientes se apilan a
+       su lado. Es la disposición de la maqueta, y ordena por importancia lo que
+       antes era una rejilla de cuatro iguales. Con más de tres categorías las
+       de más siguen en filas nuevas. #}
+    {% if categorias|length >= minimos.categorias %}
+        <section class="il-caja mb-20">
+            <h2>{{ titulos.titulo_categorias }}</h2>
+
+            <ul class="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3 lg:auto-rows-[18rem]">
+                {% for categoria in categorias %}
+                    {% set imagen = function('il_imagen_categoria', categoria) %}
+                    {% set destacada = loop.first %}
+
+                    <li class="{{ destacada ? 'sm:col-span-2 lg:row-span-2' : '' }}">
+                        <a href="{{ function('get_term_link', categoria) }}"
+                           class="group relative flex h-full min-h-[18rem] flex-col justify-end overflow-hidden rounded-lg bg-gray-100 p-6">
+                            {% if imagen %}
+                                <img src="{{ imagen.src(destacada ? 'il-producto-grande' : 'il-producto') }}"
+                                     alt="{{ imagen.alt|default('') }}"
+                                     loading="lazy"
+                                     class="absolute inset-0 h-full w-full object-cover transition duration-500 group-hover:scale-105">
+                            {% endif %}
+
+                            {# El velo sube desde abajo: la foto se ve arriba y
+                               el rótulo se lee sin depender de cómo sea la
+                               imagen que suba el cliente. #}
+                            <span class="absolute inset-0 bg-gradient-to-t from-marca-obsidiana/85 via-marca-obsidiana/40 to-transparent"></span>
+
+                            <span class="relative">
+                                <span class="block font-serif font-bold text-white {{ destacada ? 'text-3xl' : 'text-2xl' }}">{{ categoria.name }}</span>
+
+                                {% if destacada and categoria.description %}
+                                    <span class="mt-2 block max-w-md text-sm leading-6 text-white/80">{{ categoria.description }}</span>
+                                {% endif %}
+
+                                <span class="mt-4 inline-flex items-center gap-2 text-sm font-semibold tracking-[0.05em] text-marca-oro-claro">
+                                    Ver productos
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                                         class="w-3 h-3" aria-hidden="true"><path d="m9 5 7 7-7 7"/></svg>
+                                </span>
+                            </span>
+                        </a>
+                    </li>
+                {% endfor %}
+            </ul>
+        </section>
+    {% endif %}
+
+    {% set tienda = function('wc_get_page_permalink', 'shop') %}
+
+    {# 3. Más vendidos #}
+    {% if mas_vendidos|length >= minimos.productos %}
+        {% include 'partes/carrusel.twig' with {
+            titulo: titulos.titulo_mas_vendidos,
+            enlace: tienda,
+            elementos: mas_vendidos,
+            vista: 'partes/tarjeta-producto.twig'
+        } only %}
+    {% endif %}
+
+    {# 4. Recomendados #}
+    {% if recomendados|length >= minimos.productos %}
+        {% include 'partes/carrusel.twig' with {
+            titulo: titulos.titulo_recomendados,
+            enlace: tienda,
+            elementos: recomendados,
+            vista: 'partes/tarjeta-producto.twig'
+        } only %}
+    {% endif %}
+
+    {# 5. Ofertas, sobre franja de borde a borde: es el único bloque de la
+       portada que cambia de fondo, y por eso el diseño lo usa para lo que tiene
+       precio rebajado. El granate plano llenaba demasiado, así que el fondo va
+       en degradado del granate a la crema, en diagonal: la esquina clara cae
+       donde acaban las tarjetas, y la franja se sigue distinguiendo del resto
+       de la portada sin el peso del color a plena saturación.
+
+       El encabezado se repinta con `oscuro`, que solo alcanza al título y al
+       «ver todo». Antes iba con `[&_a]:text-marca-oro-claro` sobre la franja
+       entera y teñía también los nombres de producto y los botones de las
+       tarjetas, que son blancas y ahí el oro no se lee. #}
+    {% if ofertas|length >= minimos.productos %}
+        <div class="mb-20 bg-gradient-to-br from-marca-vino to-marca-crema py-16">
+            {% include 'partes/carrusel.twig' with {
+                titulo: titulos.titulo_ofertas,
+                elementos: ofertas,
+                oscuro: true,
+                vista: 'partes/tarjeta-producto.twig'
+            } only %}
+        </div>
+    {% endif %}
+
+    {# 6. Noticias #}
+    {% if noticias|length >= minimos.noticias %}
+        <section class="il-caja mb-20">
+            <h2>{{ titulos.titulo_noticias }}</h2>
+
+            {# Con dos noticias, dos columnas: en una rejilla de tres quedaría un
+               hueco al final de la fila. #}
+            <ul class="mt-8 grid gap-6 {{ noticias|length >= 3 ? 'md:grid-cols-3' : 'md:grid-cols-2' }}">
+                {% for entrada in noticias %}
+                    <li>{% include 'partes/tarjeta-noticia.twig' with { entrada: entrada } only %}</li>
+                {% endfor %}
+            </ul>
+        </section>
+    {% endif %}
+
+    {# 7. Mejor valorados #}
+    {% if mejor_valorados|length >= minimos.productos %}
+        {% include 'partes/carrusel.twig' with {
+            titulo: titulos.titulo_mejor_valorados,
+            enlace: tienda,
+            elementos: mejor_valorados,
+            vista: 'partes/tarjeta-producto.twig'
+        } only %}
+    {% endif %}
+
+    {# 8. Datos de empresa. Cada línea vacía se omite sin dejar etiqueta ni
+       separador huérfano; si no hay ningún dato, no se pinta la sección. #}
+    {% set datos = [
+        { etiqueta: 'Dirección', valor: ajustes.empresa_direccion|default('') },
+        { etiqueta: 'Teléfono',  valor: ajustes.empresa_telefono|default('') },
+        { etiqueta: 'Correo',    valor: ajustes.empresa_email|default('') },
+        { etiqueta: 'Horario',   valor: ajustes.empresa_horario|default('') }
+    ]|filter(d => d.valor is not empty) %}
+
+    {% if ajustes.empresa_descripcion|default('') or datos|length %}
+        <section class="mb-20 border-y border-marca-borde bg-white py-16">
+            <div class="il-caja grid gap-10 lg:grid-cols-2 lg:gap-16">
+                <div>
+                    <h2>{{ titulos.titulo_empresa }}</h2>
+
+                    {% if ajustes.empresa_descripcion|default('') %}
+                        <p class="mt-6 text-lg leading-8 text-marca-tenue">{{ ajustes.empresa_descripcion }}</p>
+                    {% endif %}
+
+                    {% if ajustes.empresa_mapa|default('') %}
+                        <a href="{{ ajustes.empresa_mapa }}" class="mt-6 inline-block text-sm font-semibold tracking-[0.05em] text-marca-vino hover:text-marca-vino-hondo">
+                            Ver ubicación en el mapa &rarr;
+                        </a>
+                    {% endif %}
+                </div>
+
+                {% if datos|length %}
+                    <dl class="grid content-start gap-5 rounded-lg bg-marca-crema p-8">
+                        {% for dato in datos %}
+                            <div>
+                                <dt class="il-rotulo text-xs text-marca-vino-hondo">{{ dato.etiqueta }}</dt>
+                                <dd class="mt-1 text-marca-obsidiana">{{ dato.valor }}</dd>
+                            </div>
+                        {% endfor %}
+                    </dl>
+                {% endif %}
+            </div>
+        </section>
+    {% endif %}
+
+{% endblock %}

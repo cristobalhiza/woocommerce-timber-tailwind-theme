@@ -1,0 +1,74 @@
+{# Carrusel compartido por el hero y las secciones de producto.
+   El desplazamiento, el arrastre táctil y el teclado los da el navegador con
+   scroll-snap; Alpine solo gestiona las flechas y el avance solo
+   (design.md — decisión 13).
+
+   Parámetros: titulo, bajada y enlace (encabezado de la sección), elementos,
+   vista (plantilla a incluir por elemento), ancho (clases del ancho de cada
+   elemento), autoplay (milisegundos entre avances; 0 o sin poner, no avanza
+   solo), oscuro (true cuando la sección va sobre fondo granate: repinta el
+   encabezado, y solo el encabezado) y caja (false para que la pista ocupe todo
+   el ancho, como el hero;
+   se compara con `is same as(false)` porque en Twig `false|default(true)`
+   devuelve true —false cuenta como vacío— y la caja no se quitaba nunca).
+
+   overflow-x-clip en la sección: la pista ya recorta con overflow-x-auto, pero
+   Chrome sigue sumando su contenido al ancho de scroll del documento y la
+   portada salía con barra horizontal. Va `clip` y no `hidden` porque este
+   último convertiría el eje vertical en scroll y rompería el sticky de la
+   cabecera.
+
+   Las flechas van superpuestas al centro de la pista y aparecen al pasar el
+   ratón. En pantalla táctil no hay hover: ahí se quedan visibles, porque el
+   arrastre no se anuncia solo. #}
+
+<section class="mb-20 group relative overflow-x-clip"
+         x-data="carrusel({{ autoplay|default(0) }})"
+         @mouseenter="pausado = true"
+         @mouseleave="pausado = false"
+         @focusin="pausado = true"
+         @focusout="pausado = false">
+    {% if titulo %}
+        {# Encabezado del diseño: título y bajada a la izquierda, «ver todo» a
+           la derecha alineado con la última tarjeta. #}
+        <div class="{{ caja is same as(false) ? '' : 'il-caja' }} mb-6 flex items-end justify-between gap-6">
+            <div>
+                <h2 class="{{ oscuro|default(false) ? 'text-white' : '' }}">{{ titulo }}</h2>
+
+                {% if bajada|default('') %}
+                    <p class="mt-2 {{ oscuro|default(false) ? 'text-white/80' : 'text-marca-tenue' }}">{{ bajada }}</p>
+                {% endif %}
+            </div>
+
+            {% if enlace|default('') %}
+                <a href="{{ enlace }}" class="shrink-0 whitespace-nowrap text-sm font-semibold tracking-[0.05em] {{ oscuro|default(false) ? 'text-marca-oro-claro hover:text-white' : 'text-marca-vino hover:text-marca-vino-hondo' }}">
+                    Ver todo &rarr;
+                </a>
+            {% endif %}
+        </div>
+    {% endif %}
+
+    <div class="relative {{ caja is same as(false) ? '' : 'il-caja' }}">
+        <ul x-ref="pista"
+            class="flex gap-4 overflow-x-auto snap-x snap-mandatory scroll-smooth pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            {% for elemento in elementos %}
+                <li class="snap-start shrink-0 {{ ancho|default('w-64') }}">
+                    {% include vista with { elemento: elemento } only %}
+                </li>
+            {% endfor %}
+        </ul>
+
+        <div x-show="desborde" x-cloak>
+            <button type="button"
+                    @click="desplazar(-1)"
+                    :disabled="inicio && !autoplay"
+                    class="absolute left-2 top-1/2 -translate-y-1/2 z-10 w-11 h-11 rounded-full bg-white/90 text-marca-obsidiana shadow-md transition disabled:invisible hover:bg-white focus-visible:opacity-100 opacity-100 md:opacity-0 md:group-hover:opacity-100"
+                    aria-label="Anterior">&larr;</button>
+            <button type="button"
+                    @click="desplazar(1)"
+                    :disabled="fin && !autoplay"
+                    class="absolute right-2 top-1/2 -translate-y-1/2 z-10 w-11 h-11 rounded-full bg-white/90 text-marca-obsidiana shadow-md transition disabled:invisible hover:bg-white focus-visible:opacity-100 opacity-100 md:opacity-0 md:group-hover:opacity-100"
+                    aria-label="Siguiente">&rarr;</button>
+        </div>
+    </div>
+</section>

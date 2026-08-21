@@ -1,0 +1,55 @@
+{# Panel del menú «Productos»: una columna por categoría raíz con sus
+   subcategorías, y a la derecha el último producto publicado.
+
+   Va de borde a borde bajo la cabecera —posicionado contra el <header>, no
+   contra el botón— y su apertura la lleva el x-data de la cabecera. #}
+
+{% set menu = function('il_menu_tienda') %}
+
+<div id="il-mega"
+     x-show="mega"
+     x-cloak
+     x-transition.opacity.duration.150ms
+     @click.outside="mega = false"
+     class="absolute inset-x-0 top-full max-h-[80vh] overflow-y-auto border-b border-marca-borde bg-marca-crema shadow-lg">
+
+    {# En móvil las columnas se apilan y el panel puede pasarse de alto: de ahí
+       el max-h con scroll propio, para que nunca tape la página entera. #}
+    <div class="il-caja grid gap-8 py-10 sm:grid-cols-2 lg:grid-cols-[repeat(3,minmax(0,1fr))_20rem]">
+        {% for categoria in menu.categorias %}
+            <div>
+                <h2 class="border-b border-marca-borde pb-3 text-xl">
+                    <a href="{{ categoria.enlace }}" class="hover:text-marca-vino-hondo">{{ categoria.nombre }}</a>
+                </h2>
+
+                {% if categoria.hijas|length %}
+                    <ul class="mt-4 flex flex-col gap-2.5">
+                        {% for hija in categoria.hijas %}
+                            <li>
+                                <a href="{{ hija.enlace }}" class="text-marca-tenue hover:text-marca-vino-hondo transition">{{ hija.nombre }}</a>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+            </div>
+        {% endfor %}
+
+        {% if menu.destacado %}
+            <div class="rounded-lg bg-white p-4">
+                <a href="{{ menu.destacado.enlace }}" class="block">
+                    {% if menu.destacado.imagen %}
+                        <span class="block aspect-square overflow-hidden rounded-marca bg-gray-50">
+                            <img src="{{ menu.destacado.imagen }}" alt="" loading="lazy" class="h-full w-full object-cover">
+                        </span>
+                    {% endif %}
+
+                    <span class="il-rotulo mt-4 block text-xs text-marca-vino-hondo">Novedad</span>
+
+                    <span class="mt-2 block font-serif text-lg font-bold leading-snug">{{ menu.destacado.nombre|sin_entidades }}</span>
+
+                    <span class="mt-3 block text-sm font-semibold tracking-[0.05em] text-marca-vino">Ver producto &rarr;</span>
+                </a>
+            </div>
+        {% endif %}
+    </div>
+</div>

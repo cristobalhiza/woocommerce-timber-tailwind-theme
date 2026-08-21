@@ -1,0 +1,112 @@
+{# Columna izquierda de la tienda y de los archivos de categoría.
+
+   Los cuatro bloques —precio, categorías, marca y unidades— filtran con
+   parámetros que WooCommerce ya entiende en el núcleo: el enlace de categoría
+   es el archivo de siempre, `filter_marca` y `filter_unidades` los recoge
+   WC_Query::get_layered_nav_chosen_attributes() y `min_price`/`max_price`,
+   price_filter_post_clauses(). No hace falta el widget de navegación por capas
+   ni un plugin de filtros: solo pintar los enlaces y el formulario.
+
+   El precio va primero porque es el que más se toca y el único que hay que
+   enviar: los otros tres son enlaces y se aplican al pulsar. #}
+
+<aside class="il-tienda__lateral">
+    {% if precio.piso is defined %}
+        <form method="get" class="mb-8"
+              x-data="rangoPrecio({{ precio.piso }}, {{ precio.techo }}, {{ precio.min|default('null') }}, {{ precio.max|default('null') }})"
+              @submit="preparar()">
+            <h2 class="il-rotulo mb-4">Precio</h2>
+
+            {# Dos deslizadores nativos sobre la misma pista. Sin JavaScript se
+               ven los dos campos numéricos, que son los que envían. #}
+            <div class="il-rango" :style="`--desde: ${desde}%; --hasta: ${hasta}%`">
+                <div class="il-rango__pista" aria-hidden="true"></div>
+
+                <input type="range" class="il-rango__tirador" aria-label="Precio mínimo"
+                       :min="piso" :max="techo" :step="paso"
+                       x-model.number="min" @input="ordenar('min')">
+
+                <input type="range" class="il-rango__tirador" aria-label="Precio máximo"
+                       :min="piso" :max="techo" :step="paso"
+                       x-model.number="max" @input="ordenar('max')">
+            </div>
+
+            <p class="il-rango__valores mt-3 text-sm font-semibold text-marca-obsidiana" x-cloak>
+                <span x-text="moneda(min)"></span> – <span x-text="moneda(max)"></span>
+            </p>
+
+            <div class="mt-3 flex items-center gap-2">
+                <label class="sr-only" for="il-min">Precio mínimo</label>
+                <input id="il-min" x-ref="min" type="number" name="min_price" min="0" step="1"
+                       value="{{ precio.min }}" placeholder="Mín" x-model.number="min" @change="ordenar('min')"
+                       class="w-full rounded-marca border border-marca-borde bg-white px-3 py-2 text-sm">
+
+                <span class="text-marca-tenue">–</span>
+
+                <label class="sr-only" for="il-max">Precio máximo</label>
+                <input id="il-max" x-ref="max" type="number" name="max_price" min="0" step="1"
+                       value="{{ precio.max }}" placeholder="Máx" x-model.number="max" @change="ordenar('max')"
+                       class="w-full rounded-marca border border-marca-borde bg-white px-3 py-2 text-sm">
+            </div>
+
+            {# El formulario es un GET a la misma URL: los demás filtros activos
+               —marca, unidades, orden— viajan como campos ocultos para no
+               perderse al aplicar el precio. #}
+            {% for campo, valor in ocultos %}
+                <input type="hidden" name="{{ campo }}" value="{{ valor }}">
+            {% endfor %}
+
+            <button type="submit" class="mt-3 w-full rounded-marca border border-marca-vino px-4 py-2 text-sm font-semibold text-marca-vino transition hover:bg-marca-vino hover:text-white">
+                Aplicar
+            </button>
+        </form>
+    {% endif %}
+
+    {# Unidades por envase: el atributo `pa_unidades`. En este catálogo el dato
+       no venía en ningún campo —se dedujo del nombre del producto con un script
+       de CLI, y solo donde era inequívoco—, así que hay productos sin él y
+       categorías enteras donde el bloque ni aparece. Va desplegable porque los
+       tamaños pasan de veinte. #}
+    {% include 'partes/faceta.twig' with {
+        titulo: 'Unidades',
+        opciones: unidades,
+        sufijo: ' u.',
+        desplegable: true,
+        separador: precio.piso is not defined
+    } only %}
+
+    {% if categorias|length %}
+        <nav class="mb-8 border-t border-marca-borde pt-6">
+            <h2 class="il-rotulo mb-4">Categorías</h2>
+
+            <ul class="flex flex-col gap-1">
+                {% for categoria in categorias %}
+                    <li>
+                        <a href="{{ categoria.enlace }}"
+                           class="block rounded-marca px-3 py-2 text-sm transition {{ categoria.activa ? 'border-l-2 border-marca-vino bg-marca-vino/5 font-semibold text-marca-vino-hondo' : 'text-marca-tenue hover:bg-marca-crema hover:text-marca-vino-hondo' }}">
+                            {{ categoria.nombre }}
+                            <span class="text-xs text-gray-500">({{ categoria.total }})</span>
+                        </a>
+
+                        {% if categoria.hijas|length %}
+                            <ul class="ml-3 mt-1 flex flex-col gap-1 border-l border-marca-borde pl-3">
+                                {% for hija in categoria.hijas %}
+                                    <li>
+                                        <a href="{{ hija.enlace }}"
+                                           class="block py-1 text-sm transition {{ hija.activa ? 'font-semibold text-marca-vino-hondo' : 'text-marca-tenue hover:text-marca-vino-hondo' }}">
+                                            {{ hija.nombre }}
+                                            <span class="text-xs text-gray-500">({{ hija.total }})</span>
+                                        </a>
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        {% endif %}
+                    </li>
+                {% endfor %}
+            </ul>
+        </nav>
+    {% endif %}
+
+    {% include 'partes/faceta.twig' with { titulo: 'Marca', opciones: marcas } only %}
+
+</aside>

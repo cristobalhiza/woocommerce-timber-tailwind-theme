@@ -1,0 +1,6 @@
+{
+    "require": {
+        "timber/timber": "^2.3",
+        "mindkomm/timber-integration-woocommerce": "^2.0"
+    }
+}

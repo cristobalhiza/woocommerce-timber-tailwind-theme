@@ -1,0 +1,42 @@
+{# Añadir al carrito de un listado, compartido por la tienda, los archivos de
+   categoría y la portada.
+
+   Mientras el producto no está en el carrito se muestra el botón de
+   WooCommerce; en cuanto entra, el mismo hueco pasa a ser el contador de
+   cantidad, que edita esa línea contra la Store API.
+
+   Solo se sustituye en los productos que la tarjeta puede añadir por sí sola.
+   Los variables, agrupados y externos no se añaden desde el listado —su botón
+   lleva a la ficha—, así que ahí no hay línea que contar y el botón se queda.
+   La condición es la misma que usa WooCommerce para decidir si el botón es de
+   añadir o un enlace, en vez de una lista de tipos escrita a mano.
+
+   El estado de partida siempre es el botón, nunca el contador: estas páginas se
+   sirven de caché y el carrito no se conoce hasta que el store sincroniza
+   (design.md — decisión 4). #}
+
+{% if producto.supports('ajax_add_to_cart') and producto.is_purchasable and producto.is_in_stock %}
+    <div x-data="{ id: {{ id }}, get linea() { return this.$store.carrito.linea(this.id); } }">
+        <template x-if="!linea">
+            {{ function('il_boton_carrito', id) }}
+        </template>
+
+        <template x-if="linea">
+            <div class="il-contador w-full justify-between">
+                <button type="button"
+                        @click="$store.carrito.cambiarCantidad(linea.clave, linea.cantidad - 1)"
+                        :disabled="$store.carrito.ocupado"
+                        aria-label="Quitar una unidad">−</button>
+
+                <span x-text="linea.cantidad" data-valor></span>
+
+                <button type="button"
+                        @click="$store.carrito.cambiarCantidad(linea.clave, linea.cantidad + 1)"
+                        :disabled="$store.carrito.ocupado || (linea.maximo && linea.cantidad >= linea.maximo)"
+                        aria-label="Añadir una unidad">+</button>
+            </div>
+        </template>
+    </div>
+{% else %}
+    {{ function('il_boton_carrito', id) }}
+{% endif %}

@@ -1,0 +1,69 @@
+{# Un bloque de filtro del lateral de la tienda.
+
+   Lo comparten marca y unidades. Cada entrada llega de il_faceta() con su
+   enlace ya resuelto —marcada, el enlace la quita; sin marcar, la añade—, así
+   que el filtro funciona sin JavaScript: son enlaces, no un formulario.
+
+   Con `desplegable` se pinta como un selector múltiple: un campo que enseña lo
+   elegido y, al abrirlo, la lista con buscador. Los tamaños de envase pasan de
+   veinte y en abierto se comían la columna. El desplegable es un <details>
+   nativo, así que abre y cierra sin JavaScript; Alpine solo filtra por texto, y
+   sin él se ven todas las opciones, que es exactamente lo de antes.
+
+   Si no hay términos en la categoría que se está viendo, el bloque no se pinta:
+   en Relojería no tiene sentido preguntar por el tamaño del pack. #}
+
+{% if opciones|length %}
+    {% set elegidas = opciones|filter(o => o.activa) %}
+
+    <div class="{{ separador|default(true) ? 'mb-8 border-t border-marca-borde pt-6' : 'mb-8' }}">
+        {% if desplegable|default(false) %}
+            <h2 class="il-rotulo mb-4">{{ titulo }}</h2>
+
+            {# Abierto de entrada si hay algo marcado: si no, el visitante no ve
+               qué filtro está aplicado y no encuentra dónde quitarlo. #}
+            <details class="il-multi" {{ elegidas|length ? 'open' : '' }} x-data="{ busqueda: '' }">
+                <summary class="il-multi__campo">
+                    <span class="il-multi__valores">
+                        {%- if elegidas|length -%}
+                            {% for elegida in elegidas %}
+                                <span class="il-multi__ficha">{{ elegida.nombre }}{{ sufijo|default('') }}</span>
+                            {% endfor %}
+                        {%- else -%}
+                            <span class="il-multi__vacio">Todas</span>
+                        {%- endif -%}
+                    </span>
+
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                         class="il-multi__flecha h-3 w-3 shrink-0" aria-hidden="true"><path d="m5 9 7 7 7-7"/></svg>
+                </summary>
+
+                <div class="il-multi__panel">
+                    <label class="sr-only" for="il-buscar-{{ titulo|lower }}">Buscar en {{ titulo|lower }}</label>
+                    <input id="il-buscar-{{ titulo|lower }}"
+                           type="search" x-model="busqueda" placeholder="Escribe para buscar…" autocomplete="off"
+                           class="w-full rounded-marca border border-marca-borde bg-white px-3 py-2 text-sm">
+
+                    <ul class="il-multi__lista">
+                        {% for opcion in opciones %}
+                            {# El valor va en el dato y no en la expresión: así el
+                               nombre no tiene que sobrevivir a dos escapados. #}
+                            <li data-valor="{{ opcion.nombre|lower }}"
+                                x-show="!busqueda || $el.dataset.valor.startsWith(busqueda.trim().toLowerCase())">
+                                {% include 'partes/faceta-opcion.twig' with { opcion: opcion, sufijo: sufijo|default('') } only %}
+                            </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </details>
+        {% else %}
+            <h2 class="il-rotulo mb-4">{{ titulo }}</h2>
+
+            <ul class="flex flex-col gap-1">
+                {% for opcion in opciones %}
+                    <li>{% include 'partes/faceta-opcion.twig' with { opcion: opcion, sufijo: sufijo|default('') } only %}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+    </div>
+{% endif %}

@@ -1,0 +1,257 @@
+/* PANTALLA DE ACCESO
+   Entrada aparte, no parte del bundle del tema: wp-login.php es una página de
+   WordPress con su propio marcado y su propia hoja, y meterle el CSS del sitio
+   —que empieza por el reset de Tailwind— dejaría sin estilo todo lo que aquí no
+   se repinte a mano. Así solo viajan las fuentes de marca y las reglas de esta
+   pantalla, que son las que hacen falta.
+
+   Las fuentes son las mismas dos del tema y las empaqueta Vite: el login no
+   pide nada a Google, igual que el resto del sitio. De Libre Caslon basta la
+   negrita, que es lo único que se usa aquí. */
+@import "@fontsource-variable/manrope";
+@import "@fontsource/libre-caslon-text/700.css";
+
+/* La paleta vive en el @theme de input.css; aquí se repite en crudo porque este
+   fichero no pasa por Tailwind y no puede leer aquellas variables. Si cambia la
+   marca, cambian los dos sitios. */
+:root {
+    --il-vino: #8b0000;
+    --il-vino-hondo: #610000;
+    --il-crema: #fcf9f8;
+    --il-obsidiana: #1c1b1b;
+    --il-tenue: #5a403c;
+    --il-borde: #e3beb8;
+}
+
+body.login {
+    background-color: var(--il-crema);
+    /* Dos luces cálidas muy abiertas en vez de un fondo plano: da profundidad
+       sin cargar la pantalla ni pedir una imagen. */
+    background-image:
+        radial-gradient(60rem 40rem at 15% -10%, rgb(139 0 0 / 0.07), transparent 60%),
+        radial-gradient(45rem 35rem at 95% 110%, rgb(212 175 55 / 0.12), transparent 60%);
+    background-attachment: fixed;
+    color: var(--il-obsidiana);
+    font-family: "Manrope Variable", ui-sans-serif, system-ui, sans-serif;
+}
+
+#login {
+    width: 24rem;
+    max-width: 92vw;
+    padding-top: 4vh;
+}
+
+/* EL LOGO
+   WordPress pinta su propia W como background del enlace y esconde el texto con
+   text-indent. La imagen la sustituye includes/login.php, que es quien conoce el
+   logo del personalizador; aquí va la caja. Sin logo subido, esa misma regla
+   descubre el texto y el nombre del sitio sale en serif. */
+#login h1 a,
+.login h1 a {
+    width: auto;
+    height: 5.5rem;
+    margin-bottom: 1.75rem;
+    background-position: center center;
+    background-size: contain;
+}
+
+body.il-login-sin-logo h1 a {
+    height: auto;
+    background: none;
+    text-indent: 0;
+    color: var(--il-vino-hondo);
+    font-family: "Libre Caslon Text", ui-serif, Georgia, serif;
+    font-size: 2rem;
+    font-weight: 700;
+    letter-spacing: -0.025em;
+    line-height: 1.2;
+    overflow: visible;
+}
+
+/* Titular sobre el formulario, que WordPress no trae: lo añade login.php. */
+.il-bienvenida {
+    margin: 0 0 1.25rem;
+    color: var(--il-obsidiana);
+    font-family: "Libre Caslon Text", ui-serif, Georgia, serif;
+    font-size: 1.5rem;
+    font-weight: 700;
+    text-align: center;
+}
+
+.il-bienvenida span {
+    display: block;
+    margin-top: 0.375rem;
+    color: var(--il-tenue);
+    font-family: "Manrope Variable", ui-sans-serif, system-ui, sans-serif;
+    font-size: 0.875rem;
+    font-weight: 400;
+}
+
+/* LA TARJETA */
+.login form {
+    margin-top: 0;
+    padding: 2rem 1.75rem;
+    border: 1px solid var(--il-borde);
+    border-radius: 0.5rem;
+    background-color: #fff;
+    box-shadow: 0 10px 30px -12px rgb(28 27 27 / 0.18);
+}
+
+.login label {
+    color: var(--il-tenue);
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+
+.login form .input,
+.login input[type="text"],
+.login input[type="password"],
+.login input[type="email"] {
+    width: 100%;
+    margin: 0.375rem 0 1.25rem;
+    padding: 0.625rem 0.75rem;
+    border: 1px solid var(--il-borde);
+    border-radius: 0.25rem;
+    background-color: #fff;
+    color: var(--il-obsidiana);
+    font-family: inherit;
+    font-size: 1rem;
+    box-shadow: none;
+}
+
+.login input[type="text"]:focus,
+.login input[type="password"]:focus,
+.login input[type="email"]:focus {
+    border-color: var(--il-vino);
+    box-shadow: 0 0 0 2px rgb(139 0 0 / 0.15);
+    outline: none;
+}
+
+/* El ojo de «mostrar contraseña» va dentro del marco del campo. */
+.login .wp-pwd {
+    position: relative;
+}
+
+.login .wp-pwd button.wp-hide-pw {
+    top: 0.125rem;
+    right: 0.25rem;
+    color: var(--il-tenue);
+}
+
+.login .wp-pwd button.wp-hide-pw:hover {
+    color: var(--il-vino);
+}
+
+.login input[type="checkbox"] {
+    accent-color: var(--il-vino);
+    border-color: var(--il-borde);
+}
+
+.login .forgetmenot label {
+    font-weight: 400;
+}
+
+/* EL BOTÓN
+   Mismo oro degradado que la llamada a la acción del sitio, con el texto casi
+   negro encima. Se anulan el borde, la sombra y el text-shadow que trae el
+   botón primario del admin. */
+.login .button-primary,
+.wp-core-ui .button-primary {
+    display: block;
+    float: none;
+    width: 100%;
+    height: auto;
+    margin-top: 0.5rem;
+    padding: 0.75rem 1rem;
+    border: 0;
+    border-radius: 0.25rem;
+    background: linear-gradient(134deg, #ffe088 0%, #fed65b 100%);
+    color: #241a00;
+    font-family: inherit;
+    font-size: 0.875rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    line-height: 1.25rem;
+    text-align: center;
+    text-transform: uppercase;
+    text-shadow: none;
+    box-shadow: none;
+}
+
+.wp-core-ui .button-primary:hover,
+.wp-core-ui .button-primary:focus {
+    background: linear-gradient(134deg, #ffd75f 0%, #f6c73f 100%);
+    color: #241a00;
+    box-shadow: none;
+}
+
+.wp-core-ui .button-primary:focus-visible {
+    outline: 2px solid var(--il-vino);
+    outline-offset: 2px;
+}
+
+/* ENLACES DE ABAJO */
+.login #nav,
+.login #backtoblog {
+    padding: 0;
+    text-align: center;
+}
+
+.login #nav {
+    margin-top: 1.25rem;
+}
+
+.login #backtoblog {
+    margin-top: 0.5rem;
+}
+
+.login #nav a,
+.login #backtoblog a,
+.login .privacy-policy-page-link a {
+    color: var(--il-vino);
+    font-size: 0.875rem;
+}
+
+.login #nav a:hover,
+.login #backtoblog a:hover,
+.login .privacy-policy-page-link a:hover {
+    color: var(--il-vino-hondo);
+    text-decoration: underline;
+}
+
+/* AVISOS
+   Mismos colores apagados que los avisos de la tienda. */
+.login .message,
+.login .notice,
+.login #login_error {
+    margin-bottom: 1.25rem;
+    padding: 0.875rem 1rem;
+    border: 0;
+    border-left: 3px solid;
+    border-radius: 0.25rem;
+    box-shadow: none;
+}
+
+.login .message,
+.login .notice {
+    border-color: var(--il-vino);
+    background-color: #fff;
+    color: var(--il-obsidiana);
+}
+
+.login #login_error {
+    border-color: #ba1a1a;
+    background-color: #ffdad6;
+    color: #93000a;
+}
+
+.login #login_error a {
+    color: #93000a;
+}
+
+/* El aviso de privacidad es de WordPress y aquí solo se apaga: no debe pesar
+   más que el formulario. El selector de idioma se retira en login.php —el sitio
+   es de un solo idioma y ahí solo añade ruido. */
+.login .privacy-policy-page-link {
+    margin-top: 0.75rem;
+}
